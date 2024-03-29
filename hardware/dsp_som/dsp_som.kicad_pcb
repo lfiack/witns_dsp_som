@@ -135,6 +135,7 @@
 			(dielectric_constraints no)
 		)
 		(pad_to_mask_clearance 0)
+		(pad_to_paste_clearance_ratio -0.15)
 		(allow_soldermask_bridges_in_footprints no)
 		(pcbplotparams
 			(layerselection 0x00010fc_ffffffff)
@@ -17696,6 +17697,17 @@
 		)
 		(layer "Edge.Cuts")
 		(uuid "eb78cf69-fd43-48f2-a2eb-91d96afb7a73")
+	)
+	(gr_text "JLCJLCJLCJLC"
+		(at 109 78 0)
+		(layer "F.SilkS")
+		(uuid "e5d3d740-779e-479a-8c4d-86abddb4dd69")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
 	)
 	(gr_text "Hole to hole 0.5mm - Center to center 0.8mm\nVia to via same net 0.254mm"
 		(at 148 63 0)
