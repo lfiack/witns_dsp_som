@@ -507,7 +507,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "../dsp_som_carry_gerber/",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
