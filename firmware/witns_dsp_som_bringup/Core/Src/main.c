@@ -177,57 +177,57 @@ h_sgtl5000_t h_sgtl5000 =
 
 void list_files(const char *path)
 {
-    FRESULT res;
-    DIR dir;
-    FILINFO fno;
+	FRESULT res;
+	DIR dir;
+	FILINFO fno;
 
 #if _USE_LFN
-    static char lfn[_MAX_LFN + 1];
-    fno.lfname = lfn;
-    fno.lfsize = sizeof(lfn);
+	static char lfn[_MAX_LFN + 1];
+	fno.lfname = lfn;
+	fno.lfsize = sizeof(lfn);
 #endif
 
-    res = f_opendir(&dir, path);  // Ouvre le répertoire
-    if (res == FR_OK) {
-        while (1) {
-            res = f_readdir(&dir, &fno);
-            if (res != FR_OK || fno.fname[0] == 0)
-                break; // Fin
+	res = f_opendir(&dir, path);  // Ouvre le répertoire
+	if (res == FR_OK) {
+		while (1) {
+			res = f_readdir(&dir, &fno);
+			if (res != FR_OK || fno.fname[0] == 0)
+				break; // Fin
 #if _USE_LFN
-            printf("%s%s\n", fno.lfname[0] ? fno.lfname : fno.fname,
-                   (fno.fattrib & AM_DIR) ? "/" : "");
+			printf("%s%s\n", fno.lfname[0] ? fno.lfname : fno.fname,
+					(fno.fattrib & AM_DIR) ? "/" : "");
 #else
-            printf("%s%s\r\n", fno.fname,
-                   (fno.fattrib & AM_DIR) ? "/" : "");
+			printf("%s%s\r\n", fno.fname,
+					(fno.fattrib & AM_DIR) ? "/" : "");
 #endif
-        }
-        f_closedir(&dir);
-    } else {
-        printf("f_opendir error (%d)\r\n", res);
-    }
+		}
+		f_closedir(&dir);
+	} else {
+		printf("f_opendir error (%d)\r\n", res);
+	}
 }
 
 void read_text_file(const char *filename)
 {
-    FIL file;
-    FRESULT res;
-    char buffer[128];
-    UINT bytes_read;
+	FIL file;
+	FRESULT res;
+	char buffer[128];
+	UINT bytes_read;
 
-    res = f_open(&file, filename, FA_READ);
-    if (res == FR_OK) {
-        printf("Reading %s:\r\n", filename);
-        do {
-            res = f_read(&file, buffer, sizeof(buffer)-1, &bytes_read);
-            if (res != FR_OK) break;
-            buffer[bytes_read] = '\0';
-            printf("%s", buffer);
-        } while (bytes_read == sizeof(buffer)-1);
-        printf("\r\n-- End of file --\r\n");
-        f_close(&file);
-    } else {
-        printf("f_open error (%d)\r\n", res);
-    }
+	res = f_open(&file, filename, FA_READ);
+	if (res == FR_OK) {
+		printf("Reading %s:\r\n", filename);
+		do {
+			res = f_read(&file, buffer, sizeof(buffer)-1, &bytes_read);
+			if (res != FR_OK) break;
+			buffer[bytes_read] = '\0';
+			printf("%s", buffer);
+		} while (bytes_read == sizeof(buffer)-1);
+		printf("\r\n-- End of file --\r\n");
+		f_close(&file);
+	} else {
+		printf("f_open error (%d)\r\n", res);
+	}
 }
 
 
@@ -331,45 +331,48 @@ int main(void)
 		h_sgtl5000.tx_buffer[i] = 0;
 		//		printf("%u\r\n", h_sgtl5000.tx_buffer[i]);
 	}
-
 	HAL_StatusTypeDef ret;
-	ret = sgtl5000_enable(&h_sgtl5000);
-	if (ret != HAL_OK)
-	{
-		printf("Error enabling SGTL5000 %d\r\n", ret);
-		Error_Handler();
-	}
 
-	printf("SGTL5000 enabled\r\n");
-
-
-	ret = sgtl5000_line_in_level(&h_sgtl5000, 0, 0);
-	if (ret != HAL_OK)
-	{
-		printf("Error setting line in level %d\r\n", ret);
-		Error_Handler();
-	}
-
-	printf("Line in level set\r\n");
-
-	ret = sgtl5000_line_out_level(&h_sgtl5000, 0, 0);
-	if (ret != HAL_OK)
-	{
-		printf("Error setting line out level %d\r\n", ret);
-		Error_Handler();
-	}
-
-	printf("Line out level set\r\n");
-
-	ret = sgtl5000_unmute(&h_sgtl5000);
-	if (ret != HAL_OK)
-	{
-		printf("Error unmuting SGTL5000 %d\r\n", ret);
-		Error_Handler();
-	}
-
-	printf("SGTL5000 unmuted\r\n");
-
+	__HAL_SAI_ENABLE(h_sgtl5000.hsai_tx);
+	ret = sgtl5000_init(&h_sgtl5000);
+	//	HAL_StatusTypeDef ret;
+	//	ret = sgtl5000_enable(&h_sgtl5000);
+	//	if (ret != HAL_OK)
+	//	{
+	//		printf("Error enabling SGTL5000 %d\r\n", ret);
+	//		Error_Handler();
+	//	}
+	//
+	//	printf("SGTL5000 enabled\r\n");
+	//
+	//
+	//	ret = sgtl5000_line_in_level(&h_sgtl5000, 0, 0);
+	//	if (ret != HAL_OK)
+	//	{
+	//		printf("Error setting line in level %d\r\n", ret);
+	//		Error_Handler();
+	//	}
+	//
+	//	printf("Line in level set\r\n");
+	//
+	//	ret = sgtl5000_line_out_level(&h_sgtl5000, 0, 0);
+	//	if (ret != HAL_OK)
+	//	{
+	//		printf("Error setting line out level %d\r\n", ret);
+	//		Error_Handler();
+	//	}
+	//
+	//	printf("Line out level set\r\n");
+	//
+	//	ret = sgtl5000_unmute(&h_sgtl5000);
+	//	if (ret != HAL_OK)
+	//	{
+	//		printf("Error unmuting SGTL5000 %d\r\n", ret);
+	//		Error_Handler();
+	//	}
+	//
+	//	printf("SGTL5000 unmuted\r\n");
+	//
 	ret = sgtl5000_i2s_start(&h_sgtl5000);
 	if (ret != HAL_OK)
 	{
@@ -401,6 +404,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
+
 		//		if (HAL_GetTick() % 1000 == 0)
 		//		{
 		//			uint32_t tmp = irq_counter;

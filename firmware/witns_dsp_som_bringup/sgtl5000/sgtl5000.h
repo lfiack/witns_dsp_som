@@ -80,6 +80,9 @@ typedef struct h_sgtl5000_struct
 
 HAL_StatusTypeDef sgtl5000_i2c_read_register(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t * data);
 HAL_StatusTypeDef sgtl5000_i2c_write_register(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t data);
+HAL_StatusTypeDef sgtl5000_i2c_set_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t mask);
+HAL_StatusTypeDef sgtl5000_i2c_clear_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t mask);
+HAL_StatusTypeDef sgtl5000_init(h_sgtl5000_t * h_sgtl5000);
 HAL_StatusTypeDef sgtl5000_enable(h_sgtl5000_t * h_sgtl5000);
 HAL_StatusTypeDef sgtl5000_line_in_level(h_sgtl5000_t * h_sgtl5000, uint8_t left, uint8_t right);
 HAL_StatusTypeDef sgtl5000_line_out_level(h_sgtl5000_t * h_sgtl5000, uint8_t left, uint8_t right);
