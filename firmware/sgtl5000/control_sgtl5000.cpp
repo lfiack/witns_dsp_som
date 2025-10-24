@@ -517,7 +517,7 @@ bool AudioControlSGTL5000::enable(void) {
 #endif	
 }
 
-
+#ifdef PORT
 bool AudioControlSGTL5000::enable(const unsigned extMCLK, const uint32_t pllFreq)
 {
 
@@ -591,7 +591,7 @@ bool AudioControlSGTL5000::enable(const unsigned extMCLK, const uint32_t pllFreq
 	semi_automated = true;
 	return true;
 }
-
+#endif
 
 
 unsigned int AudioControlSGTL5000::read(unsigned int reg)
@@ -674,7 +674,7 @@ bool AudioControlSGTL5000::micGain(unsigned int dB)
 	    && write(CHIP_ANA_ADC_CTRL, (input_gain << 4) | input_gain);
 }
 
-
+#ifdef PORT
 // CHIP_ANA_ADC_CTRL
 // Actual measured full-scale peak-to-peak sine wave input for max signal
 //  0: 3.12 Volts p-p
@@ -737,7 +737,7 @@ unsigned short AudioControlSGTL5000::lineOutLevel(uint8_t left, uint8_t right)
 	else if (right < 13) right = 13;
 	return modify(CHIP_LINE_OUT_VOL,(right<<8)|left,(31<<8)|31);
 }
-
+#endif
 
 unsigned short AudioControlSGTL5000::dacVolume(float n) // set both directly
 {

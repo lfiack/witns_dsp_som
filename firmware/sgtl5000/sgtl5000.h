@@ -1,14 +1,14 @@
 /*
  * sgtl5000.h
  *
- *  Created on: Nov 22, 2023
+ *  Created on: Oct 14, 2025
  *      Author: laurentf
  */
 
 #ifndef SGTL5000_SGTL5000_H_
 #define SGTL5000_SGTL5000_H_
 
-#include <main.h>
+#include "main.h"
 
 typedef enum sgtl5000_registers_enum
 {
@@ -65,18 +65,28 @@ typedef enum sgtl5000_registers_enum
 	SGTL5000_DAP_COEF_WR_A2_LSB = 0x013A
 } sgtl5000_registers_t;
 
+#define SGTL5000_TX_BUFFER_LENGTH (2*100)	// left + right
+
 typedef struct h_sgtl5000_struct
 {
 	I2C_HandleTypeDef * hi2c;
-	uint16_t dev_address;
+	SAI_HandleTypeDef * hsai_tx;
+	SAI_HandleTypeDef * hsai_rx;
+
+	uint16_t i2c_address;
+
+	uint16_t tx_buffer[SGTL5000_TX_BUFFER_LENGTH];
 } h_sgtl5000_t;
 
 HAL_StatusTypeDef sgtl5000_i2c_read_register(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t * data);
 HAL_StatusTypeDef sgtl5000_i2c_write_register(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t data);
-HAL_StatusTypeDef sgtl5000_i2c_set_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t set_mask);
-HAL_StatusTypeDef sgtl5000_i2c_clear_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t clear_mask);
-
+HAL_StatusTypeDef sgtl5000_i2c_set_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t mask);
+HAL_StatusTypeDef sgtl5000_i2c_clear_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t mask);
 HAL_StatusTypeDef sgtl5000_init(h_sgtl5000_t * h_sgtl5000);
-
+HAL_StatusTypeDef sgtl5000_enable(h_sgtl5000_t * h_sgtl5000);
+HAL_StatusTypeDef sgtl5000_line_in_level(h_sgtl5000_t * h_sgtl5000, uint8_t left, uint8_t right);
+HAL_StatusTypeDef sgtl5000_line_out_level(h_sgtl5000_t * h_sgtl5000, uint8_t left, uint8_t right);
+HAL_StatusTypeDef sgtl5000_unmute(h_sgtl5000_t * h_sgtl5000);
+HAL_StatusTypeDef sgtl5000_i2s_start(h_sgtl5000_t * h_sgtl5000);
 
 #endif /* SGTL5000_SGTL5000_H_ */
