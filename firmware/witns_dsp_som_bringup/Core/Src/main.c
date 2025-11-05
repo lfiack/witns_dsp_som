@@ -481,22 +481,22 @@ int main(void)
 	//
 	//	printf("I2S Started\r\n");
 	//
-	//	FATFS fs;
-	//	FIL file;
-	//	FRESULT res;
-	//	DIR dir;
-	//	FILINFO fno;
-	//	char path[64];
-	//
-	//	res = f_mount(&fs, "", 1);  // "" = "0:", 1 = mount now
-	//	if (res != FR_OK) {
-	//		printf("f_mount error (%d)\r\n", res);
-	//	} else {
-	//		printf("SD mounted successfully\r\n");
-	//	}
-	//
-	//	list_files("/");
-	//	read_text_file("readme.txt");
+		FATFS fs;
+//		FIL file;
+		FRESULT res;
+//		DIR dir;
+//		FILINFO fno;
+//		char path[64];
+
+		res = f_mount(&fs, "", 1);  // "" = "0:", 1 = mount now
+		if (res != FR_OK) {
+			printf("f_mount error (%d)\r\n", res);
+		} else {
+			printf("SD mounted successfully\r\n");
+		}
+
+		list_files("/");
+		read_text_file("readme.txt");
 
 	// Starts MCLK but not the LR clock and other signals
 	__HAL_SAI_ENABLE(&hsai_BlockA1);
