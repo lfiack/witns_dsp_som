@@ -21,6 +21,8 @@ const unsigned char right_arrows_8x8 [] = {
     0x20, 0x30, 0x38, 0x3C, 0x3C, 0x38, 0x30, 0x20
 };
 
+static void erase_param(void);
+
 uint8_t gui_init(void)
 {
     // Reset (while we're coding)
@@ -99,19 +101,51 @@ uint8_t gui_display_edit_arrows(void)
     return 0;
 }
 
-uint8_t gui_display_value(float param)
+uint8_t gui_display_float(float param)
 {
     if (param >= 1.0f) param = 1.0f;
     if (param <= 0.0f) param = 0.0f;
     uint8_t val = 26 + (param*74);    // 26..100
 
-    // Erasing the bar
-    ssd1306_FillRectangle(26, 25, 100, 30, Black);
+    erase_param();
 
     // Value of the param
     ssd1306_FillRectangle(26, 25, val, 30, White);
 
     // ssd1306_UpdateScreen();
+
+    return 0;
+}
+
+uint8_t gui_display_bool(uint8_t param)
+{
+    erase_param();
+
+    if (param)
+    {
+        ssd1306_SetCursor(26,22);
+        ssd1306_WriteString("OFF", Font_7x10, White);
+
+        // ssd1306_FillRectangle(50, 21, 60, 27, White);
+        ssd1306_SetCursor(50,22);
+        ssd1306_WriteString("ON", Font_7x10, Black);
+    }
+    else
+    {
+        // ssd1306_FillRectangle(26, 21, 46, 27, White);
+        ssd1306_SetCursor(26,22);
+        ssd1306_WriteString("OFF", Font_7x10, Black);
+
+        ssd1306_SetCursor(50,22);
+        ssd1306_WriteString("ON", Font_7x10, White);
+    }
+
+    return 0;
+}
+
+uint8_t gui_display_func_run(void)
+{
+    erase_param();
 
     return 0;
 }
@@ -159,17 +193,17 @@ void gui_tests(void)
     {
         for (float param = 0.0f ; param <= 1.0f ; param+=.05f)
         {
-            gui_display_value(param);
+            gui_display_float(param);
             HAL_Delay(50);
         }
 
         for (float param = 1.0f ; param >= 0.0f ; param-=.05f)
         {
-            gui_display_value(param);
+            gui_display_float(param);
             HAL_Delay(50);
         }
 
-        gui_display_value(0.0f);
+        gui_display_float(0.0f);
         HAL_Delay(50);
     }
 
@@ -202,10 +236,10 @@ void gui_tests(void)
     // Parameter to the max just for fun
     for (float param = 0.0f ; param <= 1.0f ; param+=.05f)
     {
-        gui_display_value(param);
+        gui_display_float(param);
         HAL_Delay(50);
     }
-    gui_display_value(1.0f);
+    gui_display_float(1.0f);
 
     for (float inl = 1.0f ; inl >= 0.0f ; inl-=.05f)
     {
@@ -235,8 +269,13 @@ void gui_tests(void)
     // Param to 0
     for (float param = 1.0f ; param >= 0.0f ; param-=.05f)
     {
-        gui_display_value(param);
+        gui_display_float(param);
         HAL_Delay(50);
     }
-    gui_display_value(0.0f);
+    gui_display_float(0.0f);
+}
+
+static void erase_param(void)
+{
+    ssd1306_FillRectangle(20, 20, 100, 31, Black);
 }

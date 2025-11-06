@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 #include "grnlr.h"
-#include "gui.h"
+#include "coder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -74,6 +74,30 @@ int _write(int file, char *ptr, int len)
   return len;
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  switch(GPIO_Pin)
+  {
+    case ENC_PB_Pin:
+      coder_pb_pressed_cb(&h_coder);
+      break;
+    case ENC_A_Pin:
+    if (HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin) != HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin))
+      {
+        coder_increment_cb(&h_coder, 1);
+      }
+      if (HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin) == HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin))
+      {
+        coder_increment_cb(&h_coder, -1);
+      }
+
+      break;
+    case ENC_B_Pin:
+      break;
+    default:
+      break;
+  }
+}
 /* USER CODE END 0 */
 
 /**

@@ -4,8 +4,27 @@
 
 #include "gui.h"
 #include "coder.h"
+#include "main.h"
+#include "parameter.h"
 
 h_coder_t h_coder;
+h_param_t h_param;
+
+float feedback = 0.0f;
+uint8_t freeze = 0;
+float mix = 0.0f;
+float volume = 0.0f;
+float love = 0.75f;
+
+uint8_t edit_mode = 0;
+
+static void grnlr_process_pb(void);
+static void grnlr_process_coder(int8_t inc);
+
+void led(void)
+{
+  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+}
 
 uint8_t grnlr_init(void)
 {
@@ -13,11 +32,19 @@ uint8_t grnlr_init(void)
 
     gui_init();
     coder_init(&h_coder);
+    param_init(&h_param);
 
+    param_add_float(&h_param, "Feedback", &feedback);
+    param_add_bool(&h_param, "Freeze", &freeze);
+    param_add_float(&h_param, "Mix", &mix);
+    param_add_float(&h_param, "Volume", &volume);
+    param_add_float(&h_param, "Love", &love);
 
-    gui_display_name("Test coder");
+    param_add_func(&h_param, "LED", led);
+
     gui_display_select_arrows();
-    gui_display_value(0.0f);
+    grnlr_process_coder(0);
+
     gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
 
     return 0;
@@ -27,13 +54,37 @@ void grnlr_process(void)
 {
   // gui_tests();
 
-  uint8_t edit_mode = 0;
-  float param = 0.0f;
-
   for (;;)
   {
     if (coder_is_pb_pressed(&h_coder))
     {
+      grnlr_process_pb();
+    }
+
+    int8_t inc = coder_read_increment(&h_coder);
+    
+    if (inc != 0)
+    {
+      grnlr_process_coder(inc);
+    }
+
+    gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
+  }
+}
+
+static void grnlr_process_pb(void)
+{
+  switch(h_param.list[h_param.itr].type)
+  {
+    case PARAM_TYPE_FUNC:
+      h_param.list[h_param.itr].value.func();
+      break;
+    case PARAM_TYPE_BOOL:
+      // Toggle bool
+      *(uint8_t*)h_param.list[h_param.itr].value.bval = 1 - *(uint8_t*)h_param.list[h_param.itr].value.bval;
+      gui_display_bool(*(uint8_t*)h_param.list[h_param.itr].value.bval);
+      break;
+    case PARAM_TYPE_FLOAT:
       if (edit_mode)
       {
         edit_mode = 0;
@@ -44,46 +95,43 @@ void grnlr_process(void)
         edit_mode = 1;
         gui_display_edit_arrows();
       }
-    }
-
-    int8_t inc = coder_read_increment(&h_coder);
-    
-    if (inc != 0)
-    {
-      if (edit_mode)
-      {
-        param += ((float)inc)*0.05f;
-
-        if (param < 0.0f) param = 0.0f;
-        if (param > 1.0f) param = 1.0f;
-          
-        gui_display_value(param);
-      }
-    }
-
-    gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
+      break;
+    default:
+      break;
   }
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+static void grnlr_process_coder(int8_t inc)
 {
-  switch(GPIO_Pin)
+  if (edit_mode)
   {
-    case ENC_PB_Pin:
-      coder_pb_pressed_cb(&h_coder);
-      break;
-    case ENC_A_Pin:
-    if (HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin) != HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin))
-      {
-        coder_increment_cb(&h_coder, 1);
-      }
-      if (HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin) == HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin))
-      {
-        coder_increment_cb(&h_coder, -1);
-      }
+    float param = *(float*)h_param.list[h_param.itr].value.fval;
 
+    param += ((float)inc)*0.02f;
+
+    if (param < 0.0f) param = 0.0f;
+    if (param > 1.0f) param = 1.0f;
+
+    *(float*)h_param.list[h_param.itr].value.fval = param;
+  }
+  else // selecting a param
+  {
+    param_increment_itr(&h_param, inc);
+
+    gui_display_name(h_param.list[h_param.itr].name);
+  }
+
+  switch (h_param.list[h_param.itr].type)
+  {
+    case PARAM_TYPE_FLOAT:
+      gui_display_float(*(float*)h_param.list[h_param.itr].value.fval);
       break;
-    case ENC_B_Pin:
+    
+    case PARAM_TYPE_BOOL:
+      gui_display_bool(*(uint8_t*)h_param.list[h_param.itr].value.bval);
+      break;
+    case PARAM_TYPE_FUNC:
+      gui_display_func_run();
       break;
     default:
       break;
