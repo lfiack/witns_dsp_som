@@ -7664,7 +7664,7 @@
 				)
 			)
 		)
-		(property "Value" "BAT165A"
+		(property "Value" "NSR1020MW2T1G "
 			(at 0.1 1.9 90)
 			(layer "F.Fab")
 			(uuid "be20205d-f61a-4d6b-a9f0-154951ec709b")
