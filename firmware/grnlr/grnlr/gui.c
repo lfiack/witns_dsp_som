@@ -31,9 +31,7 @@ uint8_t gui_init(void)
 
     ssd1306_Init();
 
-
-
-    ssd1306_UpdateScreen();
+    // ssd1306_UpdateScreen();
 
     return 0;
 }
@@ -82,7 +80,7 @@ uint8_t gui_display_select_arrows(void)
     ssd1306_DrawBitmap(16, 0, up_arrows_8x8, 8, 8, White);
     ssd1306_DrawBitmap(16, 8, down_arrows_8x8, 8, 8, White);
 
-    ssd1306_UpdateScreen();
+    // ssd1306_UpdateScreen();
 
     return 0;
 }
@@ -96,7 +94,7 @@ uint8_t gui_display_edit_arrows(void)
     ssd1306_DrawBitmap(16, 24, left_arrows_8x8, 8, 8, White);
     ssd1306_DrawBitmap(103, 24, right_arrows_8x8, 8, 8, White);
 
-    ssd1306_UpdateScreen();
+    // ssd1306_UpdateScreen();
 
     return 0;
 }
@@ -113,7 +111,7 @@ uint8_t gui_display_value(float param)
     // Value of the param
     ssd1306_FillRectangle(26, 25, val, 30, White);
 
-    ssd1306_UpdateScreen();
+    // ssd1306_UpdateScreen();
 
     return 0;
 }
@@ -127,7 +125,7 @@ uint8_t gui_display_name(const char * name)
     ssd1306_SetCursor(26,1);
     ssd1306_WriteString(name, Font_16x15, White);
 
-    ssd1306_UpdateScreen();
+    // ssd1306_UpdateScreen();
 
     return 0;
 }
