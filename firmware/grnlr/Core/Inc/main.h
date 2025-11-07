@@ -46,7 +46,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+#define __sdram __attribute__((section(".sdram_data")))
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

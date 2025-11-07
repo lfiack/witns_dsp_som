@@ -45,6 +45,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 file(GLOB_RECURSE USER_SOURCES CONFIGURE_DEPENDS
     "grnlr/*.c"
     "ssd1306/*.c"
+    "sgtl5000/*.c"
 )
 
 set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "${USER_SOURCES}")
@@ -59,6 +60,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     grnlr/
     ssd1306/
+    sgtl5000/
 )
 
 # Add project symbols (macros)
@@ -74,4 +76,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+)
+
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+    -u _printf_float
 )

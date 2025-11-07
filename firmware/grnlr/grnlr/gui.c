@@ -277,5 +277,5 @@ void gui_tests(void)
 
 static void erase_param(void)
 {
-    ssd1306_FillRectangle(20, 20, 100, 31, Black);
+    ssd1306_FillRectangle(22, 20, 100, 31, Black);
 }
