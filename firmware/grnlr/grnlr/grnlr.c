@@ -3,18 +3,23 @@
 #include <stdio.h>
 
 #include "gui.h"
-#include "coder.h"
 #include "main.h"
 #include "parameter.h"
 #include "sd.h"
 #include "i2c.h"
 #include "sai.h"
-#include "sgtl5000.h"
 
 #define PARAM_FILENAME "GRNLR.TXT"
 
 h_coder_t h_coder;
 h_param_t h_param;
+h_sgtl5000_t h_sgtl5000 = 
+{
+	.hi2c = &hi2c1,
+	.hsai_tx = &hsai_BlockA1,
+	.hsai_rx = &hsai_BlockB1,
+	.dev_address = 0x14
+};
 
 float feedback = 0.0f;
 uint8_t freeze = 0;
@@ -23,12 +28,6 @@ float volume = 0.0f;
 float love = 0.0f;
 
 uint8_t edit_mode = 0;
-
-#define SAI_TX_BUFFER_LENGTH (480*2)
-#define SAI_RX_BUFFER_LENGTH (480*2)
-
-static int16_t sai_tx_buffer[SAI_TX_BUFFER_LENGTH];
-static int16_t sai_rx_buffer[SAI_RX_BUFFER_LENGTH];
 
 static void grnlr_process_pb(void);
 static void grnlr_process_coder(int8_t inc);
@@ -46,37 +45,16 @@ uint8_t grnlr_init(void)
 	coder_init(&h_coder);
 	param_init(&h_param);
 	sd_init();
-
-	__HAL_SAI_ENABLE(&hsai_BlockA1);
-
-	h_sgtl5000_t h_sgtl5000;
-	h_sgtl5000.hi2c = &hi2c1;
-	h_sgtl5000.dev_address = 0x14;
-
 	sgtl5000_init(&h_sgtl5000);
 
-	uint16_t chip_id;
-	HAL_StatusTypeDef ret;
-	ret = sgtl5000_i2c_read_register(&h_sgtl5000, SGTL5000_CHIP_ID, &chip_id);
-
-	if (ret != HAL_OK)
-	{
-		printf("HAL_I2C_Mem_Read error\r\n");
-		Error_Handler();
-	}
-
-	printf("CHIP ID = 0x%4X\r\n", chip_id);
-
-	for (int i = 0 ; i < SAI_TX_BUFFER_LENGTH ; i++)
+	for (int i = 0 ; i < AUDIO_BUFFER_LENGTH ; i++)
 	{
 		// Generate a sawtooth at 1kHz
-		sai_tx_buffer[i] = i * (0xFFFF/SAI_TX_BUFFER_LENGTH);
+		h_sgtl5000.sai_tx_buffer[i] = i * (0xFFFF/AUDIO_BUFFER_LENGTH);
 	}
 
 	printf("Starting SAI...\r\n");
-	// Last parameter is the number of DMA CYCLES (here a cycle is 16 bits/2Bytes)
-	HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*) sai_rx_buffer, SAI_RX_BUFFER_LENGTH);
-	HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*) sai_tx_buffer, SAI_TX_BUFFER_LENGTH);
+	sgtl5000_start(&h_sgtl5000);
 
 	param_add_float(&h_param, "Volume", &volume);
 	param_add_float(&h_param, "Feedback", &feedback);
@@ -128,6 +106,15 @@ void grnlr_process(void)
 		gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
 		// duration = HAL_GetTick() - tick;
 		// printf("gui_update_levels in %lu\r\n", duration);
+	}
+}
+
+void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
+{
+	// Just a bypass for now, left and right
+	for (int i = 0 ; i < len ; i++)
+	{
+		out_buffer[i] = in_buffer[i];
 	}
 }
 

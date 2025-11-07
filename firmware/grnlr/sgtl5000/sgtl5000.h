@@ -10,6 +10,8 @@
 
 #include <main.h>
 
+#define AUDIO_BUFFER_LENGTH (480*2)
+
 typedef enum sgtl5000_registers_enum
 {
 	SGTL5000_CHIP_ID = 0x0000,
@@ -68,15 +70,14 @@ typedef enum sgtl5000_registers_enum
 typedef struct h_sgtl5000_struct
 {
 	I2C_HandleTypeDef * hi2c;
+	SAI_HandleTypeDef * hsai_tx;
+	SAI_HandleTypeDef * hsai_rx;
+	int16_t sai_tx_buffer[AUDIO_BUFFER_LENGTH];
+	int16_t sai_rx_buffer[AUDIO_BUFFER_LENGTH];
 	uint16_t dev_address;
 } h_sgtl5000_t;
 
-HAL_StatusTypeDef sgtl5000_i2c_read_register(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t * data);
-HAL_StatusTypeDef sgtl5000_i2c_write_register(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t data);
-HAL_StatusTypeDef sgtl5000_i2c_set_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t set_mask);
-HAL_StatusTypeDef sgtl5000_i2c_clear_bit(h_sgtl5000_t * h_sgtl5000, sgtl5000_registers_t reg_address, uint16_t clear_mask);
-
 HAL_StatusTypeDef sgtl5000_init(h_sgtl5000_t * h_sgtl5000);
-
+HAL_StatusTypeDef sgtl5000_start(h_sgtl5000_t * h_sgtl5000);
 
 #endif /* SGTL5000_SGTL5000_H_ */
