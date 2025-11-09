@@ -269,10 +269,10 @@ HAL_StatusTypeDef sgtl5000_start(h_sgtl5000_t * h_sgtl5000)
 	HAL_StatusTypeDef ret;
 
 	// Last parameter is the number of DMA CYCLES (here a cycle is 16 bits/2Bytes)
-	ret = HAL_SAI_Receive_DMA(h_sgtl5000->hsai_rx, (uint8_t*) h_sgtl5000->sai_rx_buffer, AUDIO_BUFFER_LENGTH);
+	ret = HAL_SAI_Receive_DMA(h_sgtl5000->hsai_rx, (uint8_t*) h_sgtl5000->sai_rx_buffer, AUDIO_BUFFER_LENGTH*4);
 	if (ret != HAL_OK) return ret;
 
-	ret = HAL_SAI_Transmit_DMA(h_sgtl5000->hsai_tx, (uint8_t*) h_sgtl5000->sai_tx_buffer, AUDIO_BUFFER_LENGTH);
+	ret = HAL_SAI_Transmit_DMA(h_sgtl5000->hsai_tx, (uint8_t*) h_sgtl5000->sai_tx_buffer, AUDIO_BUFFER_LENGTH*4);
 	if (ret != HAL_OK) return ret;
 
 	return HAL_OK;

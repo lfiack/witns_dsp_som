@@ -123,7 +123,7 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 	if (SAI1_Block_B == hsai->Instance)
 	{
 		//process first half of h_sgtl5000 buffer
-		// grnlr_process_audio(h_sgtl5000.sai_rx_buffer, &h_sgtl5000.sai_tx_buffer[AUDIO_BUFFER_LENGTH/2], AUDIO_BUFFER_LENGTH/2);
+		grnlr_process_audio(h_sgtl5000.sai_rx_buffer, h_sgtl5000.sai_tx_buffer, AUDIO_BUFFER_LENGTH*2);
 	}
 }
 
@@ -132,7 +132,7 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
 	if (SAI1_Block_B == hsai->Instance)
 	{
 		//process second half of h_sgtl5000 buffer
-		// grnlr_process_audio(&h_sgtl5000.sai_rx_buffer[AUDIO_BUFFER_LENGTH/2], h_sgtl5000.sai_tx_buffer, AUDIO_BUFFER_LENGTH/2);
+		grnlr_process_audio(&h_sgtl5000.sai_rx_buffer[AUDIO_BUFFER_LENGTH*2], &h_sgtl5000.sai_tx_buffer[AUDIO_BUFFER_LENGTH*2], AUDIO_BUFFER_LENGTH*2);
 	}
 }
 

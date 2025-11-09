@@ -38,34 +38,40 @@ uint8_t gui_init(void)
     return 0;
 }
 
-uint8_t gui_update_levels(float in_left, float in_right, float out_left, float out_right)
+uint8_t gui_update_levels(float *vol, float *peak)
 {
-    if (in_left >= 1.0f) in_left = 1.0f;
-    if (in_left <= 0.0f) in_left = 0.0f;
-    if (in_right >= 1.0f) in_right = 1.0f;
-    if (in_right <= 0.0f) in_right = 0.0f;
+    uint8_t pix[4];
+    uint8_t peak_pix[4];
+    for (int i = 0 ; i < 4 ; i++)
+    {
+        if (vol[i] >= 1.0f) vol[i] = 1.0f;
+        if (vol[i] <= 0.0f) vol[i] = 0.0f;
+        pix[i] = 31 - (vol[i]*31);
 
-    if (out_left >= 1.0f) out_left = 1.0f;
-    if (out_left <= 0.0f) out_left = 0.0f;
-    if (out_right >= 1.0f) out_right = 1.0f;
-    if (out_right <= 0.0f) out_right = 0.0f;
-
-    uint8_t inl = 31 - (in_left*31);
-    uint8_t inr = 31 - (in_right*31);
-    uint8_t outl = 31 - (out_left*31);
-    uint8_t outr = 31 - (out_right*31);
+        if (peak[i] >= 1.0f) peak[i] = 1.0f;
+        if (peak[i] <= 0.0f) peak[i] = 0.0f;
+        peak_pix[i] = 31 - (peak[i]*31);
+    }
 
     // Erase
     ssd1306_FillRectangle(0, 0, 10, 31, Black);
     ssd1306_FillRectangle(117, 0, 127, 31, Black);
 
     // Left and right input level
-    ssd1306_FillRectangle(0, 31, 4, inl, White);
-    ssd1306_FillRectangle(6, 31, 10, inr, White);
+    ssd1306_FillRectangle(0, 31, 4, pix[0], White);
+    ssd1306_FillRectangle(6, 31, 10, pix[1], White);
+
+    // Left and right input level peak
+    ssd1306_FillRectangle(0, peak_pix[0], 4, peak_pix[0], White);
+    ssd1306_FillRectangle(6, peak_pix[1], 10, peak_pix[1], White);
 
     // Left and right output level
-    ssd1306_FillRectangle(117, 31, 121, outl, White);
-    ssd1306_FillRectangle(123, 31, 127, outr, White);
+    ssd1306_FillRectangle(117, 31, 121, pix[2], White);
+    ssd1306_FillRectangle(123, 31, 127, pix[3], White);
+
+    // Left and right output level peak
+    ssd1306_FillRectangle(117, peak_pix[2], 121, peak_pix[2], White);
+    ssd1306_FillRectangle(123, peak_pix[3], 127, peak_pix[3], White);
 
     ssd1306_UpdateScreen();
 
@@ -169,7 +175,7 @@ void gui_tests(void)
     static uint32_t test = 0;
     static char str[10];
 
-    gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
+    // gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Testing parameter names
     gui_display_select_arrows();
@@ -210,28 +216,28 @@ void gui_tests(void)
     // Testing volumes
     for (float inl = .0 ; inl <= 1.0f ; inl+=.05f)
     {
-        gui_update_levels(inl, 0.0f, 0.0f, 0.0f);
+        // gui_update_levels(inl, 0.0f, 0.0f, 0.0f);
         HAL_Delay(50);
     }
 
     for (float inr = .0 ; inr <= 1.0f ; inr+=.05f)
     {
-        gui_update_levels(1.0f, inr, 0.0f, 0.0f);
+        // gui_update_levels(1.0f, inr, 0.0f, 0.0f);
         HAL_Delay(50);
     }
 
     for (float outl = .0 ; outl <= 1.0f ; outl+=.05f)
     {
-        gui_update_levels(1.0f, 1.0f, outl, 0.0f);
+        // gui_update_levels(1.0f, 1.0f, outl, 0.0f);
         HAL_Delay(50);
     }
 
     for (float outr = .0 ; outr <= 1.0f ; outr+=.05f)
     {
-        gui_update_levels(1.0f, 1.0f, 1.0f, outr);
+    //     gui_update_levels(1.0f, 1.0f, 1.0f, outr);
         HAL_Delay(50);
     }
-    gui_update_levels(1.0f, 1.0f, 1.0f, 1.0f);
+    // gui_update_levels(1.0f, 1.0f, 1.0f, 1.0f);
 
     // Parameter to the max just for fun
     for (float param = 0.0f ; param <= 1.0f ; param+=.05f)
@@ -243,28 +249,28 @@ void gui_tests(void)
 
     for (float inl = 1.0f ; inl >= 0.0f ; inl-=.05f)
     {
-        gui_update_levels(inl, 1.0f, 1.0f, 1.0f);
+        // gui_update_levels(inl, 1.0f, 1.0f, 1.0f);
         HAL_Delay(50);
     }
 
     for (float inr = 1.0f ; inr >= 0.0f ; inr-=.05f)
     {
-        gui_update_levels(0.0f, inr, 1.0f, 1.0f);
+        // gui_update_levels(0.0f, inr, 1.0f, 1.0f);
         HAL_Delay(50);
     }
 
     for (float outl = 1.0f ; outl >= 0.0f ; outl-=.05f)
     {
-        gui_update_levels(0.0f, 0.0f, outl, 1.0f);
+        // gui_update_levels(0.0f, 0.0f, outl, 1.0f);
         HAL_Delay(50);
     }
 
     for (float outr = 1.0f ; outr >= 0.0f ; outr-=.05f)
     {
-        gui_update_levels(0.0f, 0.0f, 0.0f, outr);
+        // gui_update_levels(0.0f, 0.0f, 0.0f, outr);
         HAL_Delay(50);
     }
-    gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
+    // gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Param to 0
     for (float param = 1.0f ; param >= 0.0f ; param-=.05f)

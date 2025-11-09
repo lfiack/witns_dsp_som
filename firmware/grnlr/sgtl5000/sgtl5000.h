@@ -10,7 +10,8 @@
 
 #include <main.h>
 
-#define AUDIO_BUFFER_LENGTH (480*2)
+#define AUDIO_BUFFER_LENGTH (64)
+#define AUDIO_FS 48000
 
 typedef enum sgtl5000_registers_enum
 {
@@ -72,8 +73,8 @@ typedef struct h_sgtl5000_struct
 	I2C_HandleTypeDef * hi2c;
 	SAI_HandleTypeDef * hsai_tx;
 	SAI_HandleTypeDef * hsai_rx;
-	int16_t sai_tx_buffer[AUDIO_BUFFER_LENGTH];
-	int16_t sai_rx_buffer[AUDIO_BUFFER_LENGTH];
+	int16_t sai_tx_buffer[AUDIO_BUFFER_LENGTH*4];	// *2 because of dual-buffer DMA
+	int16_t sai_rx_buffer[AUDIO_BUFFER_LENGTH*4];	// also *2 because of l/r => *4 overall
 	uint16_t dev_address;
 } h_sgtl5000_t;
 
