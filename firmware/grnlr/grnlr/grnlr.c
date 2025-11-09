@@ -11,6 +11,13 @@
 #include "sgtl5000.h"
 #include "vu.h"
 
+/* TODO :
+ * Display current+worst Audio CPU%
+ * White screen + LED when clipping
+ * Program a Delay
+ * Make SD Card work again ><
+**/
+
 #define PARAM_FILENAME "GRNLR.TXT"
 
 #define VU_INL 0
@@ -172,10 +179,11 @@ static void grnlr_process_pb(void)
 			// Toggle bool
 			*(uint8_t*)h_param.list[h_param.itr].value.bval = 1 - *(uint8_t*)h_param.list[h_param.itr].value.bval;
 			gui_display_bool(*(uint8_t*)h_param.list[h_param.itr].value.bval);
-			if (sd_save_param(PARAM_FILENAME, &h_param) != 0)
-			{
-				printf("Error writing param\r\n");
-			}
+			// TODO deactivated SD that caused crashes
+			// if (sd_save_param(PARAM_FILENAME, &h_param) != 0)
+			// {
+			// 	printf("Error writing param\r\n");
+			// }
 			break;
 		case PARAM_TYPE_FLOAT:
 			if (edit_mode)
