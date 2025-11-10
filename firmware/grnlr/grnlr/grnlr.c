@@ -11,6 +11,7 @@
 #include "sgtl5000.h"
 #include "stats.h"
 #include "vu.h"
+#include "delay.h"
 
 /* TODO :
  * White screen + LED when clipping
@@ -24,6 +25,11 @@
 #define VU_INR 1
 #define VU_OUTL 2
 #define VU_OUTR 3
+
+#define CHANNELS        2
+#define DELAY_LINE_LENGTH     (AUDIO_FS * MAX_DELAY_SEC * CHANNELS)
+
+__sdram float delay_line[DELAY_LINE_LENGTH];
 
 h_coder_t h_coder;
 h_param_t h_param;
@@ -40,6 +46,8 @@ h_stats_t h_stats =
 {
 	.htim = &htim6
 };
+
+h_delay_t h_delay;
 
 float volume = 0.8f;
 uint8_t mono = 1;
@@ -70,6 +78,9 @@ uint8_t grnlr_init(void)
 	}
 	stats_start(&h_stats);
 
+	delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
+
+
 	printf("Starting SAI...\r\n");
 	sgtl5000_start(&h_sgtl5000);
 
@@ -77,6 +88,9 @@ uint8_t grnlr_init(void)
 	param_add_bool(&h_param, "Mono", &mono);
 	param_add_func(&h_param, "LED", led);
 	param_add_display(&h_param, "CPU %", stats_str);
+	param_add_float(&h_param, "Feedback", &h_delay.feedback);
+	param_add_float(&h_param, "Mix", &h_delay.mix);
+	param_add_float(&h_param, "Delay", &h_delay.delay);
 
 	// TODO deactivated SD that caused crashes
 	// uint8_t res = sd_load_param(PARAM_FILENAME, &h_param);
@@ -158,7 +172,7 @@ void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len
 	if (mono)
 	{
 		// Copy left to right for the accordion
-		for (int i = 0 ; i < AUDIO_BUFFER_LENGTH*2 ; i+=2)
+		for (int i = 0 ; i < len ; i+=2)
 		{
 			audio_buffer[i+1] = audio_buffer[i];
 		}
@@ -169,6 +183,8 @@ void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len
 	{
 		audio_buffer[i] *= volume;
 	}
+
+	delay_process_block(&h_delay, audio_buffer, len);
 
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);
 	vumeters_process_block_float_interleaved(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH);
