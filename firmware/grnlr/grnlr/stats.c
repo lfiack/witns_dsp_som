@@ -8,7 +8,13 @@ uint8_t stats_start(h_stats_t * st)
 
 uint8_t stats_process(h_stats_t * st)
 {
-    st->usage = st->duration * 100 / st->period;
+    if (st->period != 0)
+    {
+        st->usage = st->duration * 100 / st->period;
+    }
+    else {
+        st->usage = 0;
+    }
     if (st->usage > st->max_usage)
         st->max_usage = st->usage;
 
