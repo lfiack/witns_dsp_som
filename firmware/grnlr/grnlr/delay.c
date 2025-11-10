@@ -15,6 +15,11 @@ void delay_init(h_delay_t *d, float *buffer, uint32_t buffer_size, uint32_t samp
     d->sample_rate = sample_rate;
     d->channels = channels;
     d->delay_samples = (uint32_t)(d->delay_time * sample_rate) * channels;
+
+    for (int i = 0 ; i < buffer_size ; i++)
+    {
+        d->buffer[i] = 0.0f;
+    }
 }
 
 /**

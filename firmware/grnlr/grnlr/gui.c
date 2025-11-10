@@ -180,6 +180,22 @@ uint8_t gui_display_name(const char * name)
     return 0;
 }
 
+uint8_t gui_flash(void)
+{
+    ssd1306_Fill(White);
+    ssd1306_UpdateScreen();
+
+    return 0;
+}
+
+uint8_t gui_erase(void)
+{
+    ssd1306_Fill(Black);
+    ssd1306_UpdateScreen();
+
+    return 0;
+}
+
 void gui_tests(void)
 {
     static uint32_t test = 0;

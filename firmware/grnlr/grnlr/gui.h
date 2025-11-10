@@ -12,6 +12,8 @@ uint8_t gui_display_bool(uint8_t param);
 uint8_t gui_display_func_run(void);
 uint8_t gui_display_str(const char * str);
 uint8_t gui_display_name(const char * name);
+uint8_t gui_flash(void);
+uint8_t gui_erase(void);
 
 void gui_tests(void);
 

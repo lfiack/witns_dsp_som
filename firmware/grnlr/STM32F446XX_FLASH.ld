@@ -239,8 +239,9 @@ SECTIONS
 
   .sdram_data (NOLOAD) :
 	{
+    . = ALIGN(32);
 	  *(.sdram_data)
-	  *(.sdram_data*)
+	  . = ALIGN(32);
 	} >SDRAM
 
 

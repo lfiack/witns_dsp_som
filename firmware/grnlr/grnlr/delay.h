@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define MAX_DELAY_SEC   1
+#define MAX_DELAY_SEC   3
 
 typedef struct h_delay_struct 
 {

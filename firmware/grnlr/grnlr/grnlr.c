@@ -10,12 +10,11 @@
 #include "sai.h"
 #include "sgtl5000.h"
 #include "stats.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "vu.h"
 #include "delay.h"
 
 /* TODO :
- * White screen + LED when clipping
- * Program a Delay
  * Make SD Card work again ><
 **/
 
@@ -28,6 +27,8 @@
 
 #define CHANNELS        2
 #define DELAY_LINE_LENGTH     (AUDIO_FS * MAX_DELAY_SEC * CHANNELS)
+
+#define FLASH_FRAMES 50
 
 __sdram float delay_line[DELAY_LINE_LENGTH];
 
@@ -55,12 +56,16 @@ char stats_str[16];
 
 uint8_t edit_mode = 0;
 
+uint32_t flash_frames = 0;
+
 static void grnlr_process_pb(void);
 static void grnlr_process_coder(int8_t inc);
+static void grnlr_display_gui(void);
 
 void led(void)
 {
 	HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	flash_frames = FLASH_FRAMES;
 }
 
 uint8_t grnlr_init(void)
@@ -147,9 +152,26 @@ void grnlr_process(void)
 			vol[i] = db_to_f(db, vu[i].min_db);
         	float p_db = vumeter_get_peak_dbfs(&vu[i]);
         	peak[i] = db_to_f(p_db, vu[i].min_db);
+			if (vol[i] > 0.99f)
+			{
+				HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
+				flash_frames = FLASH_FRAMES;
+			}
 		}
 		// tick = HAL_GetTick();
-		gui_update_levels(vol, peak);
+		if (flash_frames)
+		{
+			gui_flash();
+			flash_frames--;
+			if (flash_frames == 0)
+			{
+				grnlr_display_gui();
+			}
+		}
+		else 
+		{
+			gui_update_levels(vol, peak);
+		}
 		// duration = HAL_GetTick() - tick;
 		// printf("gui_update_levels in %lu\r\n", duration);
 		stats_process(&h_stats);
@@ -259,6 +281,39 @@ static void grnlr_process_coder(int8_t inc)
 	{
 		case PARAM_TYPE_FLOAT:
 			gui_display_float(*(float*)h_param.list[h_param.itr].value.fval);
+			break;
+
+		case PARAM_TYPE_BOOL:
+			gui_display_bool(*(uint8_t*)h_param.list[h_param.itr].value.bval);
+			break;
+		case PARAM_TYPE_FUNC:
+			gui_display_func_run();
+			break;
+		case PARAM_TYPE_DISPLAY:
+			gui_display_str(h_param.list[h_param.itr].value.str);
+		default:
+			break;
+	}
+}
+
+static void grnlr_display_gui(void)
+{
+	gui_erase();
+
+	gui_display_name(h_param.list[h_param.itr].name);
+
+	switch (h_param.list[h_param.itr].type)
+	{
+		case PARAM_TYPE_FLOAT:
+			gui_display_float(*(float*)h_param.list[h_param.itr].value.fval);
+			if (edit_mode)
+			{
+				gui_display_edit_arrows();
+			}
+			else 
+			{
+				gui_display_select_arrows();
+			}
 			break;
 
 		case PARAM_TYPE_BOOL:
