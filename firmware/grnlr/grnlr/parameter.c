@@ -56,6 +56,22 @@ uint8_t param_add_func(h_param_t * h_param, const char * name, void (* func)(voi
     return 1;
 }
 
+uint8_t param_add_display(h_param_t * h_param, const char * name, const char * str)
+{
+        if (h_param->size < PARAM_LIST_DEPTH)
+    {
+        h_param->list[h_param->size].name = name;
+        h_param->list[h_param->size].type = PARAM_TYPE_DISPLAY;
+        h_param->list[h_param->size].value.str = str;
+
+        h_param->size++;
+
+        return 0;
+    }
+
+    return 1;
+}
+
 uint8_t param_increment_itr(h_param_t * h_param, int8_t inc)
 {
     if (inc > 0)

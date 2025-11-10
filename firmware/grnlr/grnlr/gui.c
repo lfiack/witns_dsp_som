@@ -156,6 +156,16 @@ uint8_t gui_display_func_run(void)
     return 0;
 }
 
+uint8_t gui_display_str(const char * str)
+{
+    erase_param();
+
+    ssd1306_SetCursor(26,22);
+    ssd1306_WriteString(str, Font_7x10, White);
+
+    return 0;
+}
+
 uint8_t gui_display_name(const char * name)
 {
     // Erasing last name

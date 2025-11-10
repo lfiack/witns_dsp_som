@@ -5,9 +5,11 @@
 
 #include "coder.h"
 #include "sgtl5000.h"
+#include "stats.h"
 
 extern h_coder_t h_coder;
 extern h_sgtl5000_t h_sgtl5000;
+extern h_stats_t h_stats;
 
 uint8_t grnlr_init(void);
 void grnlr_process(void);
