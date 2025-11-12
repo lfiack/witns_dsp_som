@@ -139,6 +139,7 @@ static uint8_t sd_parse_line(const char * line, h_param_t * h_param)
     {
         param_t * p = &(h_param->list[i]);
 
+        
         // printf("comparing %s to %s : %d\r\n", line, p->name, strcmp(line, p->name));
         if(strcmp(line, p->name) == 0)
         {

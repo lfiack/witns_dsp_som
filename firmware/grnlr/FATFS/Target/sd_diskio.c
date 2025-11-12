@@ -134,6 +134,30 @@ DSTATUS SD_status(BYTE lun)
 
 /* USER CODE BEGIN beforeReadSection */
 /* can be used to modify previous code / undefine following code / add new code */
+uint8_t sd_rx_done = 0;
+void BSP_SD_ReadCpltCallback(void)
+{
+  sd_rx_done = 1;
+}
+
+DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
+{
+  DRESULT res = RES_ERROR;
+  sd_rx_done = 0;
+
+  if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff,
+                       (uint32_t) (sector),
+                       count) == MSD_OK)
+  {
+    /* wait until the read operation is finished */
+        uint32_t timeout = HAL_GetTick() + 5000; // 5s timeout
+        while (!sd_rx_done && HAL_GetTick() < timeout) {}
+        if (sd_rx_done) res = RES_OK;
+  }
+
+  return res;
+}
+#if DEACTIVATE
 /* USER CODE END beforeReadSection */
 /**
   * @brief  Reads Sector(s)
@@ -148,9 +172,9 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_ERROR;
 
-  if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff,
+  if(BSP_SD_ReadBlocks((uint32_t*)buff,
                        (uint32_t) (sector),
-                       count) == MSD_OK)
+                       count, SD_TIMEOUT) == MSD_OK)
   {
     /* wait until the read operation is finished */
     while(BSP_SD_GetCardState()!= MSD_OK)
@@ -164,6 +188,35 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 
 /* USER CODE BEGIN beforeWriteSection */
 /* can be used to modify previous code / undefine following code / add new code */
+#endif
+
+uint8_t sd_tx_done = 0;
+void BSP_SD_WriteCpltCallback(void)
+{
+  sd_tx_done = 1;
+}
+
+DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
+{
+  DRESULT res = RES_ERROR;
+  sd_tx_done = 0;
+
+  if(BSP_SD_WriteBlocks_DMA((uint32_t*)buff,
+                        (uint32_t)(sector),
+                        count) == MSD_OK)
+  {
+	/* wait until the Write operation is finished */
+        uint32_t timeout = HAL_GetTick() + 5000; // 5s timeout
+        while (!sd_tx_done && HAL_GetTick() < timeout) {}
+        if (sd_tx_done) res = RES_OK;
+        while(BSP_SD_GetCardState() != MSD_OK)
+        {
+        }
+  }
+
+  return res;
+}
+#if DEACTIVATE
 /* USER CODE END beforeWriteSection */
 /**
   * @brief  Writes Sector(s)
@@ -179,9 +232,9 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_ERROR;
 
-  if(BSP_SD_WriteBlocks_DMA((uint32_t*)buff,
+  if(BSP_SD_WriteBlocks((uint32_t*)buff,
                         (uint32_t)(sector),
-                        count) == MSD_OK)
+                        count, SD_TIMEOUT) == MSD_OK)
   {
 	/* wait until the Write operation is finished */
     while(BSP_SD_GetCardState() != MSD_OK)
@@ -195,6 +248,7 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 #endif /* _USE_WRITE == 1 */
 
 /* USER CODE BEGIN beforeIoctlSection */
+#endif
 /* can be used to modify previous code / undefine following code / add new code */
 /* USER CODE END beforeIoctlSection */
 /**

@@ -30,6 +30,11 @@
 
 #define FLASH_FRAMES 50
 
+#define SD_ACTIVE 1
+#define SAI_ACTIVE 1
+// #include "ff.h"
+// extern FATFS fs;
+
 __sdram float delay_line[DELAY_LINE_LENGTH];
 
 h_coder_t h_coder;
@@ -85,10 +90,6 @@ uint8_t grnlr_init(void)
 
 	delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
 
-
-	printf("Starting SAI...\r\n");
-	sgtl5000_start(&h_sgtl5000);
-
 	param_add_float(&h_param, "Volume", &volume);
 	param_add_bool(&h_param, "Mono", &mono);
 	param_add_func(&h_param, "LED", led);
@@ -98,11 +99,18 @@ uint8_t grnlr_init(void)
 	param_add_float(&h_param, "Delay", &h_delay.delay);
 
 	// TODO deactivated SD that caused crashes
-	// uint8_t res = sd_load_param(PARAM_FILENAME, &h_param);
-	// if (res != 0)
-	// {
-	// 	printf("Error opening file %s (%d)\r\n", PARAM_FILENAME, res);
-	// }
+#if (SD_ACTIVE == 1)
+	uint8_t res = sd_load_param(PARAM_FILENAME, &h_param);
+	if (res != 0)
+	{
+		printf("Error opening file %s (%d)\r\n", PARAM_FILENAME, res);
+	}
+#endif
+
+#if (SAI_ACTIVE == 1)
+	printf("Starting SAI...\r\n");
+	sgtl5000_start(&h_sgtl5000);
+#endif
 
 	gui_display_select_arrows();
 	grnlr_process_coder(0);
@@ -175,10 +183,12 @@ void grnlr_process(void)
 		// duration = HAL_GetTick() - tick;
 		// printf("gui_update_levels in %lu\r\n", duration);
 		stats_process(&h_stats);
+
+		// printf("fs->drv=%d\r\n", fs.drv);
 	}
 }
 
-float audio_buffer[AUDIO_BUFFER_LENGTH];
+float audio_buffer[AUDIO_BUFFER_LENGTH*2];
 
 void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 {
@@ -230,10 +240,12 @@ static void grnlr_process_pb(void)
 			*(uint8_t*)h_param.list[h_param.itr].value.bval = 1 - *(uint8_t*)h_param.list[h_param.itr].value.bval;
 			gui_display_bool(*(uint8_t*)h_param.list[h_param.itr].value.bval);
 			// TODO deactivated SD that caused crashes
-			// if (sd_save_param(PARAM_FILENAME, &h_param) != 0)
-			// {
-			// 	printf("Error writing param\r\n");
-			// }
+#if (SD_ACTIVE == 1)
+			if (sd_save_param(PARAM_FILENAME, &h_param) != 0)
+			{
+				printf("Error writing param\r\n");
+			}
+#endif
 			break;
 		case PARAM_TYPE_FLOAT:
 			if (edit_mode)
@@ -241,10 +253,12 @@ static void grnlr_process_pb(void)
 				edit_mode = 0;
 				gui_display_select_arrows();
 				// TODO deactivated SD that caused crashes
-				// if (sd_save_param(PARAM_FILENAME, &h_param) != 0)
-				// {
-				// 	printf("Error writing param\r\n");
-				// }
+#if (SD_ACTIVE == 1)
+				if (sd_save_param(PARAM_FILENAME, &h_param) != 0)
+				{
+					printf("Error writing param\r\n");
+				}
+#endif
 			}
 			else 
 			{
