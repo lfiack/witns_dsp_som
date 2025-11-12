@@ -15,7 +15,10 @@
 #include "delay.h"
 
 /* TODO :
- * Make SD Card work again ><
+ * implement fatfs_syscalls.c
+ * Rename project to supertofu
+ * rename grnlr dir to app
+ * organise app.c/.h
 **/
 
 #define PARAM_FILENAME "GRNLR.TXT"
@@ -73,6 +76,41 @@ void led(void)
 	flash_frames = FLASH_FRAMES;
 }
 
+#include "tinywav.h"
+#define NUM_CHANNELS 2
+#define SAMPLE_RATE 48000
+#define BLOCK_SIZE 480
+
+TinyWav tw;
+// samples are always provided in float32 format, 
+// regardless of file sample format
+float samples[NUM_CHANNELS * BLOCK_SIZE];
+void play(void)
+{
+	int ret = tinywav_open_read(&tw, 
+		"song.wav",
+		TW_INTERLEAVED // the samples will be delivered by the read function in interleaved e.g. [LRLRLRLR]
+	);
+	if (ret == -1)
+	{
+		printf("error opening file\r\n");
+		return;
+	}
+
+	// 1 second
+	for (int i = 0; i < 100; i++) {
+		ret = tinywav_read_f(&tw, samples, BLOCK_SIZE);
+		if (ret == -1)
+		{
+			printf("error reading file %d\r\n", i);
+		}
+	}
+
+	printf("success!!!\r\n");
+
+	tinywav_close_read(&tw);  
+}
+
 uint8_t grnlr_init(void)
 {
 	printf("\r\n==== GRNLR ====\r\n");
@@ -97,6 +135,7 @@ uint8_t grnlr_init(void)
 	param_add_float(&h_param, "Feedback", &h_delay.feedback);
 	param_add_float(&h_param, "Mix", &h_delay.mix);
 	param_add_float(&h_param, "Delay", &h_delay.delay);
+	param_add_func(&h_param, "Play", play);
 
 	// TODO deactivated SD that caused crashes
 #if (SD_ACTIVE == 1)

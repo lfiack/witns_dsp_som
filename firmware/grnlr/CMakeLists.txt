@@ -46,6 +46,7 @@ file(GLOB_RECURSE USER_SOURCES CONFIGURE_DEPENDS
     "grnlr/*.c"
     "ssd1306/*.c"
     "sgtl5000/*.c"
+    "tinywav/*.c"
 )
 
 set_property(GLOBAL PROPERTY CMAKE_CONFIGURE_DEPENDS "${USER_SOURCES}")
@@ -61,6 +62,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     grnlr/
     ssd1306/
     sgtl5000/
+    tinywav/
 )
 
 # Add project symbols (macros)

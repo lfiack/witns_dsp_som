@@ -71,16 +71,6 @@ void PeriphCommonClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int _write(int file, char *ptr, int len)
-{
-	if (file == 1)
-	{
-		HAL_UART_Transmit(&huart4, (uint8_t*) ptr, len, HAL_MAX_DELAY);
-	}
-
-	return len;
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	switch(GPIO_Pin)
