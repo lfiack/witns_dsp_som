@@ -131,27 +131,18 @@ uint8_t app_init(void)
 
 void app_process(void)
 {
-	// uint32_t tick;
-	// uint32_t duration;
-
 	for (;;)
 	{
 		if (coder_is_pb_pressed(&h_coder))
 		{
-			// tick = HAL_GetTick();
 			app_process_pb();
-			// duration = HAL_GetTick() - tick;
-			// printf("app_process_pb in %lu\r\n", duration);
 		}
 
 		int8_t inc = coder_read_increment(&h_coder);
 
 		if (inc != 0)
 		{
-			// tick = HAL_GetTick();
 			app_process_coder(inc);
-			// duration = HAL_GetTick() - tick;
-			// printf("app_process_coder in %lu\r\n", duration);
 		}
 
 		playback_process(&h_playback);
@@ -177,7 +168,7 @@ void app_process(void)
 				flash_frames = FLASH_FRAMES;
 			}
 		}
-		// tick = HAL_GetTick();
+
 		if (flash_frames)
 		{
 			gui_flash();
@@ -191,11 +182,8 @@ void app_process(void)
 		{
 			gui_update_levels(vol, peak);
 		}
-		// duration = HAL_GetTick() - tick;
-		// printf("gui_update_levels in %lu\r\n", duration);
-		stats_process(&h_stats);
 
-		// printf("fs->drv=%d\r\n", fs.drv);
+		stats_process(&h_stats);
 	}
 }
 

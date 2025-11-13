@@ -18,8 +18,8 @@ typedef struct h_playback_struct
     float samples[AUDIO_NUM_CHANNELS * BLOCK_SIZE * AUDIO_DOUBLE_BUFFER];
     uint32_t itr_block_wr;   // Next block to write
     uint32_t itr_block_rd;   // Current reading block
-    uint16_t itr;           // Iterator in the block
-    uint16_t block_size[AUDIO_DOUBLE_BUFFER];    // How many samples have been written
+    uint32_t itr;           // Iterator in the block
+    uint32_t block_size[AUDIO_DOUBLE_BUFFER];    // How many samples have been written
     uint8_t reading;        // Are we reading a file ?
     uint8_t block_empty;   // And need to be filled
     uint8_t eof;

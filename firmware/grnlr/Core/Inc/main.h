@@ -68,7 +68,6 @@ void Error_Handler(void);
 #define ENC_A_EXTI_IRQn EXTI2_IRQn
 #define ENC_B_Pin GPIO_PIN_3
 #define ENC_B_GPIO_Port GPIOA
-#define ENC_B_EXTI_IRQn EXTI3_IRQn
 #define OLED_RESET_Pin GPIO_PIN_12
 #define OLED_RESET_GPIO_Port GPIOD
 #define ENC_PB_Pin GPIO_PIN_13

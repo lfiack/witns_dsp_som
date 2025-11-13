@@ -24,7 +24,6 @@
 #include "i2c.h"
 #include "sai.h"
 #include "sdio.h"
-#include "sgtl5000.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb_otg.h"

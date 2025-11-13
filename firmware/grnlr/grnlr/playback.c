@@ -16,6 +16,7 @@ uint8_t playback_init(h_playback_t *pb)
 
 uint8_t playback_play(h_playback_t * pb, const char * filename)
 {
+    printf("play\r\n");
 	int ret = tinywav_open_read (
         &pb->tw, 
 		filename,
@@ -26,14 +27,9 @@ uint8_t playback_play(h_playback_t * pb, const char * filename)
 		printf("error opening file\r\n");
 		return 1;
 	}
-
     // Fill the double buffer
     // Might change later to decrease playback latency
 	ret = tinywav_read_f(&pb->tw, pb->samples, BLOCK_SIZE * AUDIO_DOUBLE_BUFFER);
-	if (ret == -1)
-	{
-		printf("error reading file\r\n");
-	}
 
     pb->block_size[0] = 512;
     pb->block_size[1] = 512;
@@ -63,7 +59,7 @@ void playback_process(h_playback_t * pb)
     if (pb->reading && pb->block_empty)
     {
         uint32_t parity = (pb->itr_block_wr % 2);
-        uint32_t offset = parity * BLOCK_SIZE;    // for dual-buffer
+        uint32_t offset = parity * BLOCK_SIZE * AUDIO_NUM_CHANNELS;    // for dual-buffer
 
         ret = tinywav_read_f(&pb->tw, &pb->samples[offset], BLOCK_SIZE);
         if (ret == -1)
@@ -71,15 +67,15 @@ void playback_process(h_playback_t * pb)
             printf("error reading file\r\n");
         }
 
-        if (ret != 512)
+        if (ret != BLOCK_SIZE)
         {
             printf("ret=%d\r\n",ret);
         }
 
-        pb->block_size[parity] = ret;
+        pb->block_size[parity] = ret * AUDIO_NUM_CHANNELS;
         
         pb->itr_block_wr++;
-        pb->block_empty = 0;
+        pb->block_empty--;
     }
 
     if (pb->eof)
@@ -97,7 +93,7 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
     if (pb->reading)
     {
         uint32_t parity = (pb->itr_block_rd % 2);
-        uint32_t offset = parity * BLOCK_SIZE;    // for dual-buffer
+        uint32_t offset = parity * BLOCK_SIZE * AUDIO_NUM_CHANNELS;    // for dual-buffer
 
         if (pb->block_size[parity] == 0)
         {
@@ -117,7 +113,7 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
             if (pb->itr == pb->block_size[parity])
             {
                 pb->itr = 0;
-                pb->block_empty = 1;
+                pb->block_empty++;
                 pb->itr_block_rd++;
                 // // dummy end condition about 10 seconds
                 // if (pb->itr_block_rd == 1000)
