@@ -13,7 +13,7 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "vu.h"
 #include "delay.h"
-#include "playback.h"
+
 
 /* TODO :
  * play sound
@@ -145,7 +145,7 @@ void app_process(void)
 			app_process_coder(inc);
 		}
 
-		playback_process(&h_playback);
+		// playback_process(&h_playback);
 
 		snprintf(stats_str, 16, "%3u%% (%u%%)\r\n", stats_usage(&h_stats), stats_max_usage(&h_stats));
 
@@ -215,8 +215,8 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 		audio_buffer[i] *= volume;
 	}
 
-	delay_process_block(&h_delay, audio_buffer, len);
 	playback_process_audio(&h_playback, audio_buffer, len);
+	delay_process_block(&h_delay, audio_buffer, len);
 
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);
 	vumeters_process_block_float_interleaved(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH);

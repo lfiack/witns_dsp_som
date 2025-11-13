@@ -2,6 +2,7 @@
 #define __PLAYBACK_H
 
 #include "main.h"
+#include "cmsis_os.h"
 
 #include "stm32f4xx_ll_usb.h"
 #include "tinywav.h"
@@ -23,6 +24,7 @@ typedef struct h_playback_struct
     uint8_t reading;        // Are we reading a file ?
     uint8_t block_empty;   // And need to be filled
     uint8_t eof;
+    osSemaphoreId_t start_reading;
 } h_playback_t;
 
 uint8_t playback_init(h_playback_t * pb);

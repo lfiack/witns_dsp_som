@@ -6,10 +6,12 @@
 #include "coder.h"
 #include "sgtl5000.h"
 #include "stats.h"
+#include "playback.h"
 
 extern h_coder_t h_coder;
 extern h_sgtl5000_t h_sgtl5000;
 extern h_stats_t h_stats;
+extern h_playback_t h_playback;
 
 uint8_t app_init(void);
 void app_process(void);

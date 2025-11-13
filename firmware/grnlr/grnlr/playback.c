@@ -5,6 +5,8 @@
 
 uint8_t playback_init(h_playback_t *pb)
 {
+    pb->start_reading = osSemaphoreNew(1, 0, NULL);
+
     pb->itr_block_wr = 0;
     pb->itr_block_rd = 0;
     pb->itr = 0;
@@ -48,6 +50,8 @@ uint8_t playback_play(h_playback_t * pb, const char * filename)
     pb->itr_block_rd = 0;
     pb->itr_block_wr = 2;   // We filled block 0 and 1 so next is 2
 
+    // osEventFlagsSet(pb->start_reading,1);
+
     return 0;
 }
 
@@ -56,6 +60,9 @@ uint8_t playback_play(h_playback_t * pb, const char * filename)
 void playback_process(h_playback_t * pb)
 {
     int ret;
+
+    osSemaphoreAcquire(pb->start_reading, osWaitForever);
+
     if (pb->reading && pb->block_empty)
     {
         uint32_t parity = (pb->itr_block_wr % 2);
@@ -105,7 +112,7 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
         // copie dans le buffer
         for (int i = 0 ; i < n ; i++)
         {
-            buf[i] += (pb->samples[offset + pb->itr]);
+            buf[i] = (pb->samples[offset + pb->itr]);
 
             // condition changement de block
             pb->itr++;
@@ -115,6 +122,7 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
                 pb->itr = 0;
                 pb->block_empty++;
                 pb->itr_block_rd++;
+                osSemaphoreRelease(pb->start_reading);
                 // // dummy end condition about 10 seconds
                 // if (pb->itr_block_rd == 1000)
                 // {

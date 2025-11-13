@@ -1,6 +1,7 @@
 #include "sd.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "ff.h"
 #include "parameter.h"
 #include <string.h>
@@ -123,6 +124,8 @@ uint8_t sd_load_param(const char *filename, h_param_t * h_param)
 static uint8_t sd_parse_line(const char * line, h_param_t * h_param)
 {
     char * eq = strchr(line, '=');
+
+    printf("%s\r\n", line);
     
     if (!eq)
     {
