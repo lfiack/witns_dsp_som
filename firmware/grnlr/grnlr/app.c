@@ -1,4 +1,4 @@
-#include "grnlr.h"
+#include "app.h"
 
 #include <stdio.h>
 
@@ -13,15 +13,16 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "vu.h"
 #include "delay.h"
+#include "playback.h"
 
 /* TODO :
- * implement fatfs_syscalls.c
+ * play sound
  * Rename project to supertofu
- * rename grnlr dir to app
  * organise app.c/.h
+ * program grnlr sound fx
 **/
 
-#define PARAM_FILENAME "GRNLR.TXT"
+#define PARAM_FILENAME "PARAM.TXT"
 
 #define VU_INL 0
 #define VU_INR 1
@@ -35,8 +36,6 @@
 
 #define SD_ACTIVE 1
 #define SAI_ACTIVE 1
-// #include "ff.h"
-// extern FATFS fs;
 
 __sdram float delay_line[DELAY_LINE_LENGTH];
 
@@ -57,6 +56,7 @@ h_stats_t h_stats =
 };
 
 h_delay_t h_delay;
+h_playback_t h_playback;
 
 float volume = 0.8f;
 uint8_t mono = 1;
@@ -66,9 +66,9 @@ uint8_t edit_mode = 0;
 
 uint32_t flash_frames = 0;
 
-static void grnlr_process_pb(void);
-static void grnlr_process_coder(int8_t inc);
-static void grnlr_display_gui(void);
+static void app_process_pb(void);
+static void app_process_coder(int8_t inc);
+static void app_display_gui(void);
 
 void led(void)
 {
@@ -76,44 +76,14 @@ void led(void)
 	flash_frames = FLASH_FRAMES;
 }
 
-#include "tinywav.h"
-#define NUM_CHANNELS 2
-#define SAMPLE_RATE 48000
-#define BLOCK_SIZE 480
-
-TinyWav tw;
-// samples are always provided in float32 format, 
-// regardless of file sample format
-float samples[NUM_CHANNELS * BLOCK_SIZE];
 void play(void)
 {
-	int ret = tinywav_open_read(&tw, 
-		"song.wav",
-		TW_INTERLEAVED // the samples will be delivered by the read function in interleaved e.g. [LRLRLRLR]
-	);
-	if (ret == -1)
-	{
-		printf("error opening file\r\n");
-		return;
-	}
-
-	// 1 second
-	for (int i = 0; i < 100; i++) {
-		ret = tinywav_read_f(&tw, samples, BLOCK_SIZE);
-		if (ret == -1)
-		{
-			printf("error reading file %d\r\n", i);
-		}
-	}
-
-	printf("success!!!\r\n");
-
-	tinywav_close_read(&tw);  
+	playback_play(&h_playback, "song.wav");
 }
 
-uint8_t grnlr_init(void)
+uint8_t app_init(void)
 {
-	printf("\r\n==== GRNLR ====\r\n");
+	printf("\r\n==== SUPERTOFU ====\r\n");
 
 	gui_init();
 	coder_init(&h_coder);
@@ -152,14 +122,14 @@ uint8_t grnlr_init(void)
 #endif
 
 	gui_display_select_arrows();
-	grnlr_process_coder(0);
+	app_process_coder(0);
 
 	//gui_update_levels(0.0f, 0.0f, 0.0f, 0.0f);
 
 	return 0;
 }
 
-void grnlr_process(void)
+void app_process(void)
 {
 	// uint32_t tick;
 	// uint32_t duration;
@@ -169,9 +139,9 @@ void grnlr_process(void)
 		if (coder_is_pb_pressed(&h_coder))
 		{
 			// tick = HAL_GetTick();
-			grnlr_process_pb();
+			app_process_pb();
 			// duration = HAL_GetTick() - tick;
-			// printf("grnlr_process_pb in %lu\r\n", duration);
+			// printf("app_process_pb in %lu\r\n", duration);
 		}
 
 		int8_t inc = coder_read_increment(&h_coder);
@@ -179,10 +149,12 @@ void grnlr_process(void)
 		if (inc != 0)
 		{
 			// tick = HAL_GetTick();
-			grnlr_process_coder(inc);
+			app_process_coder(inc);
 			// duration = HAL_GetTick() - tick;
-			// printf("grnlr_process_coder in %lu\r\n", duration);
+			// printf("app_process_coder in %lu\r\n", duration);
 		}
+
+		playback_process(&h_playback);
 
 		snprintf(stats_str, 16, "%3u%% (%u%%)\r\n", stats_usage(&h_stats), stats_max_usage(&h_stats));
 
@@ -212,7 +184,7 @@ void grnlr_process(void)
 			flash_frames--;
 			if (flash_frames == 0)
 			{
-				grnlr_display_gui();
+				app_display_gui();
 			}
 		}
 		else 
@@ -227,9 +199,9 @@ void grnlr_process(void)
 	}
 }
 
-float audio_buffer[AUDIO_BUFFER_LENGTH*2];
+float audio_buffer[AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS];
 
-void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
+void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 {
 	// int16_t to float conversion
 	for (int i = 0 ; i < len ; i++)
@@ -256,6 +228,7 @@ void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len
 	}
 
 	delay_process_block(&h_delay, audio_buffer, len);
+	playback_process_audio(&h_playback, audio_buffer, len);
 
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);
 	vumeters_process_block_float_interleaved(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH);
@@ -267,7 +240,7 @@ void grnlr_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len
 	}
 }
 
-static void grnlr_process_pb(void)
+static void app_process_pb(void)
 {
 	switch(h_param.list[h_param.itr].type)
 	{
@@ -310,7 +283,7 @@ static void grnlr_process_pb(void)
 	}
 }
 
-static void grnlr_process_coder(int8_t inc)
+static void app_process_coder(int8_t inc)
 {
 	if (edit_mode)
 	{
@@ -349,7 +322,7 @@ static void grnlr_process_coder(int8_t inc)
 	}
 }
 
-static void grnlr_display_gui(void)
+static void app_display_gui(void)
 {
 	gui_erase();
 

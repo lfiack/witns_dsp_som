@@ -24,6 +24,7 @@
 #include "i2c.h"
 #include "sai.h"
 #include "sdio.h"
+#include "sgtl5000.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb_otg.h"
@@ -34,7 +35,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 
-#include "grnlr.h"
+#include "app.h"
 #include "coder.h"
 /* USER CODE END Includes */
 
@@ -120,7 +121,11 @@ void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 		__HAL_TIM_SET_COUNTER(&htim6, 0);
 
 		//process first half of h_sgtl5000 buffer
-		grnlr_process_audio(h_sgtl5000.sai_rx_buffer, h_sgtl5000.sai_tx_buffer, AUDIO_BUFFER_LENGTH*2);
+		app_process_audio(
+			h_sgtl5000.sai_rx_buffer, 
+			h_sgtl5000.sai_tx_buffer, 
+			AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS
+		);
 
 		h_stats.duration = __HAL_TIM_GET_COUNTER(&htim6);
 	}
@@ -134,7 +139,11 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
 		__HAL_TIM_SET_COUNTER(&htim6, 0);
 
 		//process second half of h_sgtl5000 buffer
-		grnlr_process_audio(&h_sgtl5000.sai_rx_buffer[AUDIO_BUFFER_LENGTH*2], &h_sgtl5000.sai_tx_buffer[AUDIO_BUFFER_LENGTH*2], AUDIO_BUFFER_LENGTH*2);
+		app_process_audio(
+			&h_sgtl5000.sai_rx_buffer[AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS], 
+			&h_sgtl5000.sai_tx_buffer[AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS], 
+			AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS
+		);
 
 		h_stats.duration = __HAL_TIM_GET_COUNTER(&htim6);
 	}
@@ -301,9 +310,9 @@ int main(void)
 		printf("failed to initialize SDRAM\r\n");
 	}
 
-	grnlr_init();
+	app_init();
 
-	grnlr_process();
+	app_process();
   /* USER CODE END 2 */
 
   /* Infinite loop */
