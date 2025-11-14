@@ -127,6 +127,12 @@ uint8_t app_init(void)
 	{
 		printf("Error opening file %s (%d)\r\n", PARAM_FILENAME, res);
 	}
+
+	// TODO Safety feature for now
+	h_granular.param.density = 0.5f;
+	h_granular.param.size = 0.1f;
+	h_granular.param.feedback = 0.0f;
+	h_granular.param.freeze = 1;
 #endif
 
 #if (SAI_ACTIVE == 1)

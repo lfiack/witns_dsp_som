@@ -171,7 +171,7 @@ void grnlr_init(h_grnlr_t * hg, float * buffer, uint32_t buffer_length) {
 
 void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t n)
 {
-	uint16_t pShape = 0;
+	// uint16_t pShape = 0;
 	uint16_t pDensity = hg->param.density * 4096;
 	// uint16_t pPitch = 0;	// semitone
 	// uint16_t pSpread = 0;
@@ -243,7 +243,7 @@ void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t n)
 				if (hg->grain[g].startPos + (hg->grain[g].iterator) < hg->grain[g].finalPos) {
 	//				rSample = buffer_getForward(grain[i].startPos+grain[i].iterator);
 					float spl = buffer_getAbsolute(&hg->h_buffer, hg->grain[g].startPos + hg->grain[g].iterator);
-					grain_sample += grnlr_shaper(spl, pShape, hg->grain[g].iterator, pSize);
+					grain_sample += grnlr_shaper(spl, hg->param.shape, hg->grain[g].iterator, pSize);
 
 					// TODO No pitch shift for now
 //					hg->grain[i].iterator+=magic_numbers[pPitch];
@@ -263,5 +263,12 @@ void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t n)
 		}
 
 		buf[i] += grain_sample;
+
+		// Dummy playback
+		// static uint32_t itr = 0;
+
+		// buf[i] = buffer_getAbsolute(&hg->h_buffer, itr);
+		// itr++;
+		// itr = itr % hg->h_buffer.buffer_length;
 	}
 }

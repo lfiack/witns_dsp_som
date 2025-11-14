@@ -18,7 +18,8 @@ uint8_t buffer_init(h_buffer_t * hb, float * buffer, uint32_t buffer_length)
 
 	for (int i = 0 ; i < buffer_length ; i++)
 	{
-		buffer[buffer_length] = 0.0f;
+		// TODO 1kHz sawtooth
+		buffer[i] = ((i % 960) / 480.0f) - 1.0f;
 	}
 	return 0;
 }
