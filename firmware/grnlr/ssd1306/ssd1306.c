@@ -2,8 +2,16 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>  // For memcpy
+#include "cmsis_os.h"
 
 #if defined(SSD1306_USE_I2C)
+
+osSemaphoreId_t sem_i2c_written;
+
+void ssd1306_i2c_mem_write_cb(void)
+{
+    osSemaphoreRelease(sem_i2c_written);
+}
 
 void ssd1306_Reset(void) {
     /* for I2C - do nothing */
@@ -16,7 +24,9 @@ void ssd1306_WriteCommand(uint8_t byte) {
 
 // Send data
 void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
-    HAL_I2C_Mem_Write(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 0x40, 1, buffer, buff_size, HAL_MAX_DELAY);
+    HAL_I2C_Mem_Write_DMA(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 0x40, 1, buffer, buff_size);
+    
+    osSemaphoreAcquire(sem_i2c_written, osWaitForever);
 }
 
 #elif defined(SSD1306_USE_SPI)
@@ -71,6 +81,8 @@ SSD1306_Error_t ssd1306_FillBuffer(uint8_t* buf, uint32_t len) {
 
 /* Initialize the oled screen */
 void ssd1306_Init(void) {
+    sem_i2c_written = osSemaphoreNew(1, 0, NULL);
+
     // Reset OLED
     ssd1306_Reset();
 
