@@ -11,13 +11,20 @@
 /* Circular buffer management */
 
 #include "main.h"
+#include "sgtl5000.h"
 
-#define BUFFER_LENGTH 5000
+typedef struct h_buffer_struct
+{
+    float * audio_buffer;
+    uint32_t buffer_length;
+    uint32_t iterator;
+} h_buffer_t;
 
-void buffer_push(uint16_t xSample);
-uint16_t buffer_getReverse(uint32_t xElement);
-uint16_t buffer_getForward(uint32_t xElement);
-uint16_t buffer_getAbsolute(uint32_t xElement);
-uint16_t buffer_iteratorGet();
+uint8_t buffer_init(h_buffer_t * hb, float * buffer, uint32_t buffer_length);
+void buffer_push(h_buffer_t * hb, float sample);
+float buffer_getReverse(h_buffer_t * hb, uint32_t xElement);
+float buffer_getForward(h_buffer_t * hb, uint32_t xElement);
+float buffer_getAbsolute(h_buffer_t * hb, uint32_t xElement);
+uint32_t buffer_iteratorGet(h_buffer_t * hb);
 
 #endif /* INC_BUFFER_H_ */

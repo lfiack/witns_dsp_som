@@ -3,9 +3,6 @@
  *
  *  Created on: 11 nov. 2020
  *      Author: Laurent Fiack
- *
- *      DAC on A3
- *      ADC on A2
  */
 
 #include "grnlr.h"
@@ -16,11 +13,6 @@
 #include "usart.h"
 #include <stdio.h>
 #include <string.h>
-
-#define DENSITY_ZERO_MARGIN 200
-#define MAX_GRAIN 10
-#define MAX_DELAY 30000
-#define SPREAD_ZERO_MARGIN 100
 
 /* To increase the pitch we want to skip some sample
  * To lower the pitch we want to output several times the same sample
@@ -38,27 +30,19 @@ static const uint32_t magic_numbers[49] = {
 		40000
 };
 
-typedef struct {
-	uint8_t playing;
-	uint16_t startPos;
-	uint32_t iterator;
-	uint16_t finalPos;
-} grain_t;
-
-static grain_t grain[MAX_GRAIN];
-static uint16_t counter = 0;
-
 //static char print_buf[10];
 
 /* Compute the envelope and apply it to the incoming sample
  * Return the processed sample
  */
-int32_t grnlr_shaper(int32_t sSample, uint16_t xShape, uint32_t xIterator, uint16_t xSize) {
-	uint32_t sMax = ((xShape%1024) * (xSize/2)) / 1024;
+float grnlr_shaper(float sSample, float xShape, uint32_t xIterator, uint32_t xSize) {
+	// There's ancient black magic that I don't want to touch here
+	uint16_t sShape = (uint16_t)(xShape * 4096);
+	uint32_t sMax = ((sShape%1024) * (xSize/2)) / 1024;
 	int32_t sEnvelope = 0;
 
 	// Ramp down to Triangle
-	if (xShape < 1024) {
+	if (sShape < 1024) {
 		if (xIterator < sMax) {
 			sEnvelope = (xIterator * 4096)/sMax;
 		}
@@ -67,7 +51,7 @@ int32_t grnlr_shaper(int32_t sSample, uint16_t xShape, uint32_t xIterator, uint1
 		}
 	}
 	// Triangle to Square
-	else if (xShape < 2048) {
+	else if (sShape < 2048) {
 		if (xIterator < (xSize/2)-sMax) {
 			sEnvelope = (xIterator * 4096)/((xSize/2)-sMax);
 		}
@@ -79,7 +63,7 @@ int32_t grnlr_shaper(int32_t sSample, uint16_t xShape, uint32_t xIterator, uint1
 		}
 	}
 	// Square to Triangle again
-	else if (xShape < 3072) {
+	else if (sShape < 3072) {
 		sMax = (xSize/2) - sMax;
 		if (xIterator < (xSize/2)-sMax) {
 			sEnvelope = (xIterator * 4096)/((xSize/2)-sMax);
@@ -92,7 +76,7 @@ int32_t grnlr_shaper(int32_t sSample, uint16_t xShape, uint32_t xIterator, uint1
 		}
 	}
 	// Triangle to ramp up
-	else if (xShape < 4096) {
+	else if (sShape < 4096) {
 		sMax += (xSize/2);
 
 		if (xIterator < sMax) {
@@ -103,14 +87,8 @@ int32_t grnlr_shaper(int32_t sSample, uint16_t xShape, uint32_t xIterator, uint1
 		}
 	}
 
-//	sprintf(print_buf, "i=%d ", xIterator);
-//	HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
-//
-//	sprintf(print_buf, "e=%d s=", sEnvelope);
-//	HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
-
 	sSample = sSample * sEnvelope;
-	sSample = sSample / 4096;
+	sSample = sSample / 4096.0f;
 
 	return sSample;
 }
@@ -118,12 +96,12 @@ int32_t grnlr_shaper(int32_t sSample, uint16_t xShape, uint32_t xIterator, uint1
 /* Find an available grain, configure the start and the end position
  * Initialize the iterator (playhead position) and start it
  */
-void grnlr_startGrain(uint16_t xPosition, uint16_t xSize) {
+void grnlr_startGrain(h_grnlr_t * hg, uint16_t xPosition, uint16_t xSize) {
 	static uint16_t grainIterator = 0;
 
 	int i = 0;
 
-	while(grain[grainIterator].playing == 1 && i < MAX_GRAIN) {
+	while(hg->grain[grainIterator].playing == 1 && i < MAX_GRAIN) {
 		if (grainIterator < MAX_GRAIN-1) {
 			grainIterator++;
 		}
@@ -135,10 +113,10 @@ void grnlr_startGrain(uint16_t xPosition, uint16_t xSize) {
 //	sprintf(print_buf, "%d %d\r\n", grainIterator, i);
 //	HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
 	if (i < MAX_GRAIN) {
-		grain[grainIterator].playing = 1;
-		grain[grainIterator].startPos = (xPosition+buffer_iteratorGet())%BUFFER_LENGTH;
-		grain[grainIterator].iterator = 0;
-		grain[grainIterator].finalPos = grain[grainIterator].startPos + xSize;
+		hg->grain[grainIterator].playing = 1;
+		hg->grain[grainIterator].startPos = (xPosition+buffer_iteratorGet(&hg->h_buffer)) % hg->h_buffer.buffer_length;
+		hg->grain[grainIterator].iterator = 0;
+		hg->grain[grainIterator].finalPos = hg->grain[grainIterator].startPos + xSize;
 //		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 	}
 }
@@ -169,155 +147,121 @@ int32_t grnlr_random(int32_t min, int32_t max) {
     return sRandom;
 }
 
-void grnlr_init(void) {
+void grnlr_init(h_grnlr_t * hg, float * buffer, uint32_t buffer_length) {
+	hg->counter = 0;
+	buffer_init(&(hg->h_buffer), buffer, buffer_length);
+
+	hg->param.size = 0.0f;
+	hg->param.position = 0.0f;
+	hg->param.shape = 0.0f;
+	hg->param.density = 0.5f;
+	hg->param.feedback = 0.0f;
+	hg->param.pitch = 0.5f;	// semitone
+	hg->param.spread = 0.0f;
+	hg->param.trigger = 0;
+	hg->param.freeze = 0;
+
 	for (int i = 0 ; i < MAX_GRAIN ; i++) {
-		grain[i].playing = 0;
-		grain[i].startPos = 0;
-		grain[i].iterator = 0;
-		grain[i].finalPos = 0;
+		hg->grain[i].playing = 0;
+		hg->grain[i].startPos = 0;
+		hg->grain[i].iterator = 0;
+		hg->grain[i].finalPos = 0;
 	}
 }
 
-uint16_t grnlr_process(uint16_t xSample) {
-	uint16_t rSample = 0;
-	int32_t sSample = 0;
-	//	uint32_t writtenSmple = buffer_get(parameters_positionGet());
-	//	writtenSmple *= parameters_feedbackGet();
-	//	writtenSmple /= 4096;
-	//	writtenSmple += xSample;
-	//	buffer_push(writtenSmple);
-
-	//	return buffer_get(parameters_positionGet());
-
-	// uint16_t pSize = parameters_sizeGet();
-	// uint16_t pPosition = parameters_positionGet();
-	// uint16_t pShape = parameters_shapeGet();
-	// uint16_t pDensity = parameters_densityGet();
-	// uint16_t pFeedback = parameters_feedbackGet();
-	// uint16_t pPitch = parameters_pitchGet();
-	// uint16_t pSpread = parameters_spreadGet();
-	uint16_t pSize;
-	uint16_t pPosition;
-	uint16_t pShape;
-	uint16_t pDensity;
-	uint16_t pFeedback;
-	uint16_t pPitch;
-	uint16_t pSpread;
-	uint8_t pTrigger;
-	uint8_t pFreeze;
-	int16_t semitone;
+void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t n)
+{
+	uint16_t pShape = 0;
+	uint16_t pDensity = hg->param.density * 4096;
+	// uint16_t pPitch = 0;	// semitone
+	// uint16_t pSpread = 0;
 
 	uint16_t absDensity;
-	static uint16_t delay = 0;
 
-	pSize = (pSize * (BUFFER_LENGTH-1))/4095;
-	pPosition = (pPosition * (BUFFER_LENGTH-1))/4095;
-	pSpread = (pSpread * (BUFFER_LENGTH-1))/4095;
+	// Size of the grain in samples (L+R)
+	uint32_t pSize = ((uint32_t)(hg->param.size * (hg->h_buffer.buffer_length)) - 1);
 
-	if (pSpread > SPREAD_ZERO_MARGIN) {
-//		sprintf(print_buf, "%d ", pPosition);
-//		HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
+	// Position of where the grain is played. Should be pair for L+R alignment
+	uint32_t pPosition = ((uint32_t)(hg->param.position * (hg->h_buffer.buffer_length)) - 1) & 0xFFFFFFFE;
 
-		pPosition += grnlr_random(0, pSpread);
-		pPosition %= BUFFER_LENGTH;
+	// Where the grains can randomly be around the position
+	uint32_t pSpread = (uint32_t)(hg->param.spread * (hg->h_buffer.buffer_length-1));
 
-//		sprintf(print_buf, "%d\r\n", pPosition);
-//		HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
+	// TODO add random later
+	// if (pSpread > SPREAD_ZERO_MARGIN) {
+	// 	pPosition += grnlr_random(0, pSpread);
+	// 	pPosition %= hg->h_buffer.buffer_length;
+	// }
+
+	if (hg->param.trigger) {
+		// printf("trig\r\n");
+		hg->param.trigger = 0;
+		grnlr_startGrain(hg, pPosition, pSize);
 	}
 
-	if (pTrigger) {
-		pTrigger = 0;
-		grnlr_startGrain(pPosition, pSize);
-//		HAL_UART_Transmit(&huart2, (uint8_t*)"t\r\n", 3, HAL_MAX_DELAY);
-	}
-
-//	static int16_t old_semitone = 0;
-//	if (semitone != old_semitone) {
-//		sprintf(print_buf, "st=%d ", semitone);
-//		HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
-//		sprintf(print_buf, "mn=%d\r\n", magic_numbers[semitone]);
-//		HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
-//		old_semitone = semitone;
-//	}
-
+	// TODO no density for now, just manual trigger
 	// Density button turned left: constant delay between triggers
 	if (pDensity < (2048-DENSITY_ZERO_MARGIN)) {
-//		static uint16_t delay_old = 0;
-		uint16_t delay = (pSize / MAX_GRAIN) + (pDensity * MAX_DELAY / 2048);
+		// uint16_t delay = (pSize / MAX_GRAIN) + (pDensity * MAX_DELAY / 2048);
+		uint16_t delay = pDensity;
 
-		if (counter > delay) {
-			counter = 0;
-			grnlr_startGrain(pPosition, pSize);
+		if (hg->counter > delay) {
+			hg->counter = 0;
+			grnlr_startGrain(hg, pPosition, pSize);
 		}
 		else {
-			counter++;
-		}
-
-//		if (delay != delay_old) {
-//			sprintf(print_buf, "d=%d\r\n", delay);
-//			HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
-//			delay_old = delay;
-//		}
-	}
-	// Density button turned right: random delay between triggers
-	else if (pDensity > (2048+DENSITY_ZERO_MARGIN)) {
-		if (counter > delay) {
-			absDensity = 4095-pDensity;
-			delay = (pSize / MAX_GRAIN) + (absDensity * MAX_DELAY / 2048);
-			delay += grnlr_random(-(delay/2), delay/2);
-
-			counter = 0;
-			grnlr_startGrain(pPosition, pSize);
-		}
-		else {
-			counter++;
+			hg->counter++;
 		}
 	}
-	// Density button on the middle: no trigger
-	else {
-		counter = 0;
-	}
 
-	int grainPlaying = 0;
+	// // Density button turned right: random delay between triggers
+	// else if (pDensity > (2048+DENSITY_ZERO_MARGIN)) {
+	// 	if (hg->counter > delay) {
+	// 		absDensity = 4095-pDensity;
+	// 		delay = (pSize / MAX_GRAIN) + (absDensity * MAX_DELAY / 2048);
+	// 		delay += grnlr_random(-(delay/2), delay/2);
 
-	for (int i = 0 ; i < MAX_GRAIN ; i++) {
-		if (grain[i].playing == 1) {
-			if (grain[i].startPos+(grain[i].iterator/ITERATOR_FACTOR) < grain[i].finalPos) {
-//				rSample = buffer_getForward(grain[i].startPos+grain[i].iterator);
-				rSample = buffer_getAbsolute(grain[i].startPos+(grain[i].iterator/ITERATOR_FACTOR));
+	// 		hg->counter = 0;
+	// 		grnlr_startGrain(hg, pPosition, pSize);
+	// 	}
+	// 	else {
+	// 		hg->counter++;
+	// 	}
+	// }
 
-				sSample += grnlr_shaper(((int32_t)rSample) - 2048, pShape, grain[i].iterator/ITERATOR_FACTOR, pSize);
+	// // Density button on the middle: no trigger
+	// else {
+	// 	hg->counter = 0;
+	// }
 
-				grain[i].iterator+=magic_numbers[semitone];
+	for (uint32_t i = 0; i < n; i++) {
+		float grain_sample = 0.0f;
 
-				grainPlaying = 1;
-			}
-			else {
-				grain[i].playing = 0;
+		// Playing back the grains
+		for (int g = 0 ; g < MAX_GRAIN ; g++) {
+			if (hg->grain[g].playing == 1) {
+				if (hg->grain[g].startPos + (hg->grain[g].iterator) < hg->grain[g].finalPos) {
+	//				rSample = buffer_getForward(grain[i].startPos+grain[i].iterator);
+					float spl = buffer_getAbsolute(&hg->h_buffer, hg->grain[g].startPos + hg->grain[g].iterator);
+					grain_sample += grnlr_shaper(spl, pShape, hg->grain[g].iterator, pSize);
+
+					// TODO No pitch shift for now
+//					hg->grain[i].iterator+=magic_numbers[pPitch];
+					hg->grain[g].iterator++;
+				}
+				else {
+					hg->grain[g].playing = 0;
+				}
 			}
 		}
+
+		if (hg->param.freeze == 0) {
+			float in_spl = buf[i] + grain_sample * hg->param.feedback;
+			if (in_spl > 1.0f) in_spl = 1.0f;
+			if (in_spl < -1.0f) in_spl = -1.0f;
+			buffer_push(&hg->h_buffer, in_spl);
+		}
+
+		buf[i] += grain_sample;
 	}
-
-	if (!grainPlaying) {
-//		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-	}
-
-	if (sSample < -2048) sSample = -2048;
-	else if (sSample > 2047) sSample = 2047;
-	rSample = (uint16_t)(sSample+2048);
-
-	if (pFreeze == 0) {
-		int32_t sInSample = (int32_t)(xSample)-2048;
-		sInSample += ((sSample * (int32_t)pFeedback)/4096);
-		if (sInSample < -2048) sInSample = -2048;
-		else if (sInSample > 2047) sInSample = 2047;
-		buffer_push((uint16_t)(sInSample+2048));
-	}
-
-//	if (sSample != 0) {
-//		sprintf(print_buf, "%d\r\n", sSample);
-//		HAL_UART_Transmit(&huart2, (uint8_t*) print_buf, strlen(print_buf), HAL_MAX_DELAY);
-//	}
-
-	return rSample;
 }

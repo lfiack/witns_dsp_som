@@ -13,7 +13,7 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "vu.h"
 #include "delay.h"
-
+#include "grnlr.h"
 
 /* TODO :
  * play sound
@@ -37,7 +37,9 @@
 #define SD_ACTIVE 1
 #define SAI_ACTIVE 1
 
-__sdram float delay_line[DELAY_LINE_LENGTH];
+// __sdram float delay_line[DELAY_LINE_LENGTH];
+#define GRNLR_BUFFER_DURATION 10 // in second
+__sdram float grnlr_audio_buffer[AUDIO_FS * AUDIO_NUM_CHANNELS * GRNLR_BUFFER_DURATION];
 
 h_coder_t h_coder;
 h_param_t h_param;
@@ -55,7 +57,7 @@ h_stats_t h_stats =
 	.htim = &htim6
 };
 
-h_delay_t h_delay;
+// h_delay_t h_delay;
 h_playback_t h_playback;
 
 float volume = 0.8f;
@@ -65,6 +67,7 @@ char stats_str[16];
 uint8_t edit_mode = 0;
 
 uint32_t flash_frames = 0;
+h_grnlr_t h_granular;
 
 static void app_process_pb(void);
 static void app_process_coder(int8_t inc);
@@ -96,16 +99,26 @@ uint8_t app_init(void)
 	}
 	stats_start(&h_stats);
 
-	delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
+	// delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
+	grnlr_init(&h_granular, grnlr_audio_buffer, AUDIO_FS * AUDIO_NUM_CHANNELS * GRNLR_BUFFER_DURATION);
 
 	param_add_float(&h_param, "Volume", &volume);
+
+	param_add_float(&h_param, "Size", &h_granular.param.size);
+	param_add_float(&h_param, "Position", &h_granular.param.position);
+	param_add_float(&h_param, "Shape", &h_granular.param.shape);
+	param_add_float(&h_param, "Density", &h_granular.param.density);
+	param_add_float(&h_param, "Feedback", &h_granular.param.feedback);
+	param_add_float(&h_param, "Pitch", &h_granular.param.pitch);
+	param_add_float(&h_param, "Spread", &h_granular.param.spread);
+
+	param_add_bool(&h_param, "Trigger", &h_granular.param.trigger);
+	param_add_bool(&h_param, "Freeze", &h_granular.param.freeze);
+
+	param_add_func(&h_param, "Play", play);
 	param_add_bool(&h_param, "Mono", &mono);
 	param_add_func(&h_param, "LED", led);
 	param_add_display(&h_param, "CPU %", stats_str);
-	param_add_float(&h_param, "Feedback", &h_delay.feedback);
-	param_add_float(&h_param, "Mix", &h_delay.mix);
-	param_add_float(&h_param, "Delay", &h_delay.delay);
-	param_add_func(&h_param, "Play", play);
 
 	// TODO deactivated SD that caused crashes
 #if (SD_ACTIVE == 1)
@@ -216,7 +229,8 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 	}
 
 	playback_process_audio(&h_playback, audio_buffer, len);
-	delay_process_block(&h_delay, audio_buffer, len);
+	// delay_process_block(&h_delay, audio_buffer, len);
+	grnlr_process(&h_granular, audio_buffer, len);
 
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);
 	vumeters_process_block_float_interleaved(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH);
