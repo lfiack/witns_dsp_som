@@ -31,6 +31,7 @@ uint8_t playback_play(h_playback_t * pb, const char * filename)
             printf("error opening file\r\n");
             return 1;
         }
+
         // Fill the double buffer
         // Might change later to decrease playback latency
         ret = tinywav_read_f(&pb->tw, pb->samples, BLOCK_SIZE * AUDIO_DOUBLE_BUFFER);

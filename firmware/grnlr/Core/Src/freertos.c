@@ -51,16 +51,16 @@
 /* Definitions for appTask */
 osThreadId_t appTaskHandle;
 const osThreadAttr_t appTask_attributes = {
-	.name = "appTask",
-	.stack_size = 1024 * 4,
-	.priority = (osPriority_t) osPriorityLow,
+  .name = "appTask",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for SDTask */
 osThreadId_t SDTaskHandle;
 const osThreadAttr_t SDTask_attributes = {
-	.name = "SDTask",
-	.stack_size = 1024 * 4,
-	.priority = (osPriority_t) osPriorityNormal,
+  .name = "SDTask",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,45 +101,45 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
 /* USER CODE END 4 */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-	/* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	/* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-	/* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 
-	/* Create the thread(s) */
-	/* creation of appTask */
-	appTaskHandle = osThreadNew(appTaskStart, NULL, &appTask_attributes);
+  /* Create the thread(s) */
+  /* creation of appTask */
+  appTaskHandle = osThreadNew(appTaskStart, NULL, &appTask_attributes);
 
-	/* creation of SDTask */
-	SDTaskHandle = osThreadNew(SDTaskStart, NULL, &SDTask_attributes);
+  /* creation of SDTask */
+  SDTaskHandle = osThreadNew(SDTaskStart, NULL, &SDTask_attributes);
 
-	/* USER CODE BEGIN RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-	/* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
-	/* USER CODE BEGIN RTOS_EVENTS */
+  /* USER CODE BEGIN RTOS_EVENTS */
 	/* add events, ... */
-	/* USER CODE END RTOS_EVENTS */
+  /* USER CODE END RTOS_EVENTS */
 
 }
 
@@ -152,7 +152,7 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_appTaskStart */
 void appTaskStart(void *argument)
 {
-	/* USER CODE BEGIN appTaskStart */
+  /* USER CODE BEGIN appTaskStart */
 
 	app_init();
 
@@ -163,7 +163,7 @@ void appTaskStart(void *argument)
 	{
 		osDelay(1);
 	}
-	/* USER CODE END appTaskStart */
+  /* USER CODE END appTaskStart */
 }
 
 /* USER CODE BEGIN Header_SDTaskStart */
@@ -175,7 +175,7 @@ void appTaskStart(void *argument)
 /* USER CODE END Header_SDTaskStart */
 void SDTaskStart(void *argument)
 {
-	/* USER CODE BEGIN SDTaskStart */
+  /* USER CODE BEGIN SDTaskStart */
 
 	playback_init(&h_playback);
 
@@ -184,7 +184,7 @@ void SDTaskStart(void *argument)
 	{
 		playback_process(&h_playback);
 	}
-	/* USER CODE END SDTaskStart */
+  /* USER CODE END SDTaskStart */
 }
 
 /* Private application code --------------------------------------------------*/
