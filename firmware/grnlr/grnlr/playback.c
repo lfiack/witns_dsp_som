@@ -18,39 +18,49 @@ uint8_t playback_init(h_playback_t *pb)
 
 uint8_t playback_play(h_playback_t * pb, const char * filename)
 {
-    printf("play\r\n");
-	int ret = tinywav_open_read (
-        &pb->tw, 
-		filename,
-		TW_INTERLEAVED // the samples will be delivered by the read function in interleaved e.g. [LRLRLRLR]
-	);
-	if (ret == -1)
-	{
-		printf("error opening file\r\n");
-		return 1;
-	}
-    // Fill the double buffer
-    // Might change later to decrease playback latency
-	ret = tinywav_read_f(&pb->tw, pb->samples, BLOCK_SIZE * AUDIO_DOUBLE_BUFFER);
+    if (pb->reading == 0)
+    {
+        printf("play\r\n");
+        int ret = tinywav_open_read (
+            &pb->tw, 
+            filename,
+            TW_INTERLEAVED // the samples will be delivered by the read function in interleaved e.g. [LRLRLRLR]
+        );
+        if (ret == -1)
+        {
+            printf("error opening file\r\n");
+            return 1;
+        }
+        // Fill the double buffer
+        // Might change later to decrease playback latency
+        ret = tinywav_read_f(&pb->tw, pb->samples, BLOCK_SIZE * AUDIO_DOUBLE_BUFFER);
 
-    pb->block_size[0] = 512;
-    pb->block_size[1] = 512;
+        pb->block_size[0] = 512;
+        pb->block_size[1] = 512;
 
-    // for (int i = 0 ; i < BLOCK_SIZE * AUDIO_DOUBLE_BUFFER ; i++)
-    // {
-    //     printf("%d %f\r\n", i, pb->samples[i]);
-    // }
+        // for (int i = 0 ; i < BLOCK_SIZE * AUDIO_DOUBLE_BUFFER ; i++)
+        // {
+        //     printf("%d %f\r\n", i, pb->samples[i]);
+        // }
 
-    printf("playing the best song in the world\r\n");
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+        printf("playing the best song in the world\r\n");
 
-    pb->reading = 1;
-    pb->itr = 0;
-    pb->eof = 0;
-    pb->itr_block_rd = 0;
-    pb->itr_block_wr = 2;   // We filled block 0 and 1 so next is 2
+        pb->reading = 1;
+        pb->itr = 0;
+        pb->eof = 0;
+        pb->itr_block_rd = 0;
+        pb->itr_block_wr = 2;   // We filled block 0 and 1 so next is 2
 
-    // osEventFlagsSet(pb->start_reading,1);
+        // osEventFlagsSet(pb->start_reading,1);
+    }
+    else 
+    {
+        printf("stop\r\n");
+        pb->reading = 0;
+        pb->eof = 1;
+        osSemaphoreRelease(pb->start_reading);
+    }
+
 
     return 0;
 }
@@ -106,13 +116,13 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
         {
             pb->reading = 0;
             pb->eof = 1;
-            HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+            // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
         }
 
         // copie dans le buffer
         for (int i = 0 ; i < n ; i++)
         {
-            buf[i] = (pb->samples[offset + pb->itr]);
+            buf[i] += (pb->samples[offset + pb->itr]);
 
             // condition changement de block
             pb->itr++;

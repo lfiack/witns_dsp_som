@@ -73,7 +73,7 @@ static void app_display_gui(void);
 void led(void)
 {
 	HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-	flash_frames = FLASH_FRAMES;
+	// flash_frames = FLASH_FRAMES;
 }
 
 void play(void)
@@ -162,11 +162,11 @@ void app_process(void)
 			vol[i] = db_to_f(db, vu[i].min_db);
         	float p_db = vumeter_get_peak_dbfs(&vu[i]);
         	peak[i] = db_to_f(p_db, vu[i].min_db);
-			if (vol[i] > 0.99f)
-			{
-				HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
-				flash_frames = FLASH_FRAMES;
-			}
+			// if (vol[i] > 0.95f)
+			// {
+			// 	HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
+			// 	flash_frames = FLASH_FRAMES;
+			// }
 		}
 
 		if (flash_frames)
@@ -195,6 +195,11 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 	for (int i = 0 ; i < len ; i++)
 	{
 		audio_buffer[i] = ((float)in_buffer[i])/32768.0f;
+		if (audio_buffer[i] > 0.95f || audio_buffer[i] < -0.95f)
+		{
+			HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
+			flash_frames = FLASH_FRAMES;
+		}
 	}
 
 	// vumeter_process_block_float(vu, audio_buffer, AUDIO_BUFFER_LENGTH*2);
@@ -221,10 +226,25 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);
 	vumeters_process_block_float_interleaved(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH);
 
+
+
 	// Re-interleaving
 	for (int i = 0 ; i < len ; i++)
 	{
-		out_buffer[i] = (int16_t)(audio_buffer[i]*32768.0f);
+		if (audio_buffer[i] > 1.0f)
+		{
+			audio_buffer[i] = 1.0f;
+			HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
+			flash_frames = FLASH_FRAMES;
+		}
+		if (audio_buffer[i] < -1.0f)
+		{
+			audio_buffer[i] = -1.0f;
+			HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
+			flash_frames = FLASH_FRAMES;
+		}
+
+		out_buffer[i] = (int16_t)(audio_buffer[i]*32767.0f);
 	}
 }
 
