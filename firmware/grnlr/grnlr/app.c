@@ -59,6 +59,7 @@ h_delay_t h_delay;
 h_playback_t h_playback;
 
 float volume = 0.8f;
+float gain = 0.5f;
 uint8_t mono = 1;
 char stats_str[16];
 
@@ -98,14 +99,15 @@ uint8_t app_init(void)
 
 	delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
 
-	param_add_float(&h_param, "Volume", &volume);
-	param_add_bool(&h_param, "Mono", &mono);
-	param_add_func(&h_param, "LED", led);
-	param_add_display(&h_param, "CPU %", stats_str);
+	param_add_float(&h_param, "Gain", &gain);
 	param_add_float(&h_param, "Feedback", &h_delay.feedback);
 	param_add_float(&h_param, "Mix", &h_delay.mix);
 	param_add_float(&h_param, "Delay", &h_delay.delay);
 	param_add_func(&h_param, "Play", play);
+	param_add_float(&h_param, "Volume", &volume);
+	param_add_bool(&h_param, "Mono", &mono);
+	param_add_display(&h_param, "CPU %", stats_str);
+	param_add_func(&h_param, "LED", led);
 
 	// TODO deactivated SD that caused crashes
 #if (SD_ACTIVE == 1)
@@ -217,10 +219,10 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 	// Applying volume on input signal
 	for (int i = 0 ; i < len ; i++)
 	{
-		audio_buffer[i] *= volume;
+		audio_buffer[i] *= (gain * 4.0f);	// +6dB
 	}
 
-	playback_process_audio(&h_playback, audio_buffer, len);
+	playback_process_audio(&h_playback, volume, audio_buffer, len);
 	delay_process_block(&h_delay, audio_buffer, len);
 
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);

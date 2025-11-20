@@ -125,7 +125,7 @@ static uint8_t sd_parse_line(const char * line, h_param_t * h_param)
 {
     char * eq = strchr(line, '=');
 
-    printf("%s\r\n", line);
+    // printf("%s\r\n", line);
     
     if (!eq)
     {

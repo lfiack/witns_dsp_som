@@ -106,7 +106,7 @@ void playback_process(h_playback_t * pb)
 
 // Call in the audio interrupt
 // Copy a bit of the SD block into the audio buffer
-void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
+void playback_process_audio(h_playback_t * pb, float volume, float *buf, uint32_t n)
 {
     if (pb->reading)
     {
@@ -123,7 +123,7 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
         // copie dans le buffer
         for (int i = 0 ; i < n ; i++)
         {
-            buf[i] += (pb->samples[offset + pb->itr]);
+            buf[i] += (pb->samples[offset + pb->itr] * volume);
 
             // condition changement de block
             pb->itr++;

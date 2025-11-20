@@ -30,6 +30,6 @@ typedef struct h_playback_struct
 uint8_t playback_init(h_playback_t * pb);
 uint8_t playback_play(h_playback_t * pb, const char * filename);
 void playback_process(h_playback_t * pb);
-void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n);
+void playback_process_audio(h_playback_t * pb, float volume, float *buf, uint32_t n);
 
 #endif // __PLAYBACK_H
