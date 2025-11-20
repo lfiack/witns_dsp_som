@@ -5,8 +5,8 @@
 
 typedef struct h_coder_struct
 {
-    uint8_t pb_pressed;
-    int8_t increment;
+    volatile uint8_t pb_pressed;
+    volatile int8_t increment;
 } h_coder_t;
 
 uint8_t coder_init(h_coder_t * h_coder);

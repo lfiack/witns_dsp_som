@@ -14,8 +14,8 @@
 typedef struct h_stats_struct 
 {
     TIM_HandleTypeDef * htim;
-    uint32_t period;
-    uint32_t duration;
+    volatile uint32_t period;
+    volatile uint32_t duration;
     uint8_t usage;
     uint8_t max_usage;
 } h_stats_t;

@@ -100,10 +100,11 @@ uint8_t app_init(void)
 	stats_start(&h_stats);
 
 	// delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
-	grnlr_init(&h_granular, grnlr_audio_buffer, AUDIO_FS * AUDIO_NUM_CHANNELS * GRNLR_BUFFER_DURATION);
+	grnlr_init(&h_granular, grnlr_audio_buffer, AUDIO_FS, AUDIO_NUM_CHANNELS, AUDIO_BUFFER_LENGTH, GRNLR_BUFFER_DURATION);
 
 	param_add_float(&h_param, "Volume", &volume);
 
+	param_add_float(&h_param, "Mix", &h_granular.param.mix);
 	param_add_float(&h_param, "Size", &h_granular.param.size);
 	param_add_float(&h_param, "Position", &h_granular.param.position);
 	param_add_float(&h_param, "Shape", &h_granular.param.shape);
@@ -206,10 +207,11 @@ void app_process(void)
 	}
 }
 
-float audio_buffer[AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS];
-
+// len takes into account the *2 due to stereo
 void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 {
+	static float audio_buffer[AUDIO_BUFFER_LENGTH * AUDIO_NUM_CHANNELS];
+	
 	// int16_t to float conversion
 	for (int i = 0 ; i < len ; i++)
 	{
@@ -234,6 +236,7 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 		audio_buffer[i] *= volume;
 	}
 
+	// len takes into account the *2 due to stereo
 	playback_process_audio(&h_playback, audio_buffer, len);
 	// delay_process_block(&h_delay, audio_buffer, len);
 	grnlr_process(&h_granular, audio_buffer, len);
@@ -241,7 +244,6 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 	// vumeter_process_block_float(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH*2);
 	vumeters_process_block_float_interleaved(&vu[2], audio_buffer, AUDIO_BUFFER_LENGTH);
 
-	// Re-interleaving
 	for (int i = 0 ; i < len ; i++)
 	{
 		out_buffer[i] = (int16_t)(audio_buffer[i]*32768.0f);
@@ -303,6 +305,8 @@ static void app_process_coder(int8_t inc)
 		if (param > 1.0f) param = 1.0f;
 
 		*(float*)h_param.list[h_param.itr].value.fval = param;
+
+		grnlr_compute_params(&h_granular);
 	}
 	else // selecting a param
 	{

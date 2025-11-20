@@ -10,12 +10,10 @@
 
 #include "main.h"
 
-#include "buffer.h"
-
-#define DENSITY_ZERO_MARGIN 200
-#define MAX_GRAIN 10
-#define MAX_DELAY 30000
-#define SPREAD_ZERO_MARGIN 100
+#define PARAM_SIZE_MIN 0.016f
+#define PARAM_SIZE_MAX 1.0f
+#define MAX_GRAINS 1
+#define GRAIN_MAX_PERIOD 0xFFFFFFFF
 
 // A grain is a playing head that plays back in the buffer for a short period of time
 typedef struct grain_struct 
@@ -28,12 +26,13 @@ typedef struct grain_struct
 
 typedef struct grnlr_param_struct
 {
+	float mix;
     float size;
 	float position;
 	float shape;
 	float density;
 	float feedback;
-	float pitch;	// semitone
+	float pitch;
 	float spread;
 	uint8_t trigger;
 	uint8_t freeze;
@@ -41,13 +40,24 @@ typedef struct grnlr_param_struct
 
 typedef struct h_grnlr_struct
 {
-    h_buffer_t h_buffer;
-    grain_t grain[MAX_GRAIN];
-    uint16_t counter;
-    grnlr_param_t param;
+	uint32_t audio_fs;
+	uint32_t num_channels;
+	uint32_t block_size;
+	uint32_t buffer_size_s;
+	uint32_t buffer_length;
+
+	uint32_t block_counter;
+
+	uint32_t size_blocks;
+	uint32_t position_blocks;
+	uint32_t period_blocks;
+
+	grnlr_param_t param;
+	grain_t grain[MAX_GRAINS];
 } h_grnlr_t;
 
-void grnlr_init(h_grnlr_t * hg, float * buffer, uint32_t buffer_length);
-void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t n);
+void grnlr_init(h_grnlr_t * hg, float * buffer, uint32_t audio_fs, uint32_t num_channels, uint32_t block_size, uint32_t buffer_size_s);
+void grnlr_compute_params(h_grnlr_t * hg);
+void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t len);
 
 #endif /* INC_GRNLR_H_ */
