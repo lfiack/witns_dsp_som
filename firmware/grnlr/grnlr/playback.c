@@ -120,7 +120,7 @@ void playback_process_audio(h_playback_t * pb, float *buf, uint32_t n)
         // copie dans le buffer
         for (int i = 0 ; i < n ; i++)
         {
-            buf[i] = (pb->samples[offset + pb->itr]);
+            buf[i] = (pb->samples[offset + pb->itr]) * 0.2;
 
             // condition changement de block
             pb->itr++;

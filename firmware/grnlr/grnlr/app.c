@@ -39,7 +39,7 @@
 
 // __sdram float delay_line[DELAY_LINE_LENGTH];
 #define GRNLR_BUFFER_DURATION 10 // in second
-__sdram float grnlr_audio_buffer[AUDIO_FS * AUDIO_NUM_CHANNELS * GRNLR_BUFFER_DURATION];
+__sdram volatile float grnlr_audio_buffer[AUDIO_FS * AUDIO_NUM_CHANNELS * GRNLR_BUFFER_DURATION];
 
 h_coder_t h_coder;
 h_param_t h_param;
@@ -130,10 +130,10 @@ uint8_t app_init(void)
 	}
 
 	// TODO Safety feature for now
-	h_granular.param.density = 0.5f;
-	h_granular.param.size = 0.1f;
+	// h_granular.param.density = 0.5f;
+	// h_granular.param.size = 0.1f;
 	h_granular.param.feedback = 0.0f;
-	h_granular.param.freeze = 1;
+	h_granular.param.freeze = 0;
 #endif
 
 #if (SAI_ACTIVE == 1)
@@ -306,7 +306,7 @@ static void app_process_coder(int8_t inc)
 
 		*(float*)h_param.list[h_param.itr].value.fval = param;
 
-		grnlr_compute_params(&h_granular);
+		// grnlr_compute_params(&h_granular);
 	}
 	else // selecting a param
 	{
