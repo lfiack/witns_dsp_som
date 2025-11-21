@@ -163,7 +163,8 @@ void grnlr_process(h_grnlr_t * hg, float *buf, uint32_t len)
 			{
 				// Playing the grains and mixing them
 				float shape_factor = grnlr_get_shape_factor(hg, gr, i);
-				mix[i] += (shape_factor * hg->buffer[(hg->grain[gr].startPos + hg->grain[gr].iterator) * hg->block_size * hg->num_channels + i]);
+				uint32_t itr = ((hg->grain[gr].startPos + hg->grain[gr].iterator) * hg->block_size * hg->num_channels + i) % hg->buffer_length;
+				mix[i] += (shape_factor * hg->buffer[itr]);
 			}
 		}
 

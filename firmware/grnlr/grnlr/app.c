@@ -76,7 +76,7 @@ static void app_display_gui(void);
 void led(void)
 {
 	HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-	flash_frames = FLASH_FRAMES;
+	// flash_frames = FLASH_FRAMES;
 }
 
 void play(void)
@@ -187,7 +187,7 @@ void app_process(void)
 			if (vol[i] > 0.99f)
 			{
 				HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
-				flash_frames = FLASH_FRAMES;
+				// flash_frames = FLASH_FRAMES;
 			}
 		}
 
