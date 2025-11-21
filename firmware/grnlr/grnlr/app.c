@@ -60,7 +60,7 @@ h_stats_t h_stats =
 // h_delay_t h_delay;
 h_playback_t h_playback;
 
-float volume = 0.8f;
+float in_gain = 0.8f;
 uint8_t mono = 1;
 char stats_str[16];
 
@@ -102,20 +102,22 @@ uint8_t app_init(void)
 	// delay_init(&h_delay, delay_line, DELAY_LINE_LENGTH, AUDIO_FS, CHANNELS);
 	grnlr_init(&h_granular, grnlr_audio_buffer, AUDIO_FS, AUDIO_NUM_CHANNELS, AUDIO_BUFFER_LENGTH, GRNLR_BUFFER_DURATION);
 
-	param_add_float(&h_param, "Volume", &volume);
+	param_add_float(&h_param, "Gain", &in_gain);
 
-	param_add_float(&h_param, "Mix", &h_granular.param.mix);
 	param_add_float(&h_param, "Size", &h_granular.param.size);
 	param_add_float(&h_param, "Position", &h_granular.param.position);
 	param_add_float(&h_param, "Shape", &h_granular.param.shape);
 	param_add_float(&h_param, "Density", &h_granular.param.density);
-	param_add_float(&h_param, "Feedback", &h_granular.param.feedback);
-	param_add_float(&h_param, "Pitch", &h_granular.param.pitch);
-	param_add_float(&h_param, "Spread", &h_granular.param.spread);
+	// param_add_float(&h_param, "Feedback", &h_granular.param.feedback);
+	// param_add_float(&h_param, "Pitch", &h_granular.param.pitch);
+	// param_add_float(&h_param, "Spread", &h_granular.param.spread);
+
+	param_add_float(&h_param, "Mix", &h_granular.param.mix);
 
 	param_add_bool(&h_param, "Trigger", &h_granular.param.trigger);
 	param_add_bool(&h_param, "Freeze", &h_granular.param.freeze);
 
+	param_add_float(&h_param, "Volume", &h_playback.volume);
 	param_add_func(&h_param, "Play", play);
 	param_add_bool(&h_param, "Mono", &mono);
 	param_add_func(&h_param, "LED", led);
@@ -233,7 +235,7 @@ void app_process_audio(int16_t * in_buffer, int16_t * out_buffer, uint16_t len)
 	// Applying volume on input signal
 	for (int i = 0 ; i < len ; i++)
 	{
-		audio_buffer[i] *= volume;
+		audio_buffer[i] *= (in_gain * 2.0f);
 	}
 
 	// len takes into account the *2 due to stereo

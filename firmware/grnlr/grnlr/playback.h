@@ -17,6 +17,7 @@ typedef struct h_playback_struct
 {
     TinyWav tw;
     float samples[AUDIO_NUM_CHANNELS * BLOCK_SIZE * AUDIO_DOUBLE_BUFFER];
+    float volume;
     volatile uint32_t itr_block_wr;   // Next block to write
     volatile uint32_t itr_block_rd;   // Current reading block
     volatile uint32_t itr;           // Iterator in the block
