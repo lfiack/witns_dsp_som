@@ -108,7 +108,7 @@ uint8_t app_init(void)
 	param_add_float(&h_param, "Position", &h_granular.param.position);
 	param_add_float(&h_param, "Shape", &h_granular.param.shape);
 	param_add_float(&h_param, "Density", &h_granular.param.density);
-	// param_add_float(&h_param, "Feedback", &h_granular.param.feedback);
+	param_add_float(&h_param, "Feedback", &h_granular.param.feedback);
 	// param_add_float(&h_param, "Pitch", &h_granular.param.pitch);
 	// param_add_float(&h_param, "Spread", &h_granular.param.spread);
 
